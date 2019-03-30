@@ -4,6 +4,8 @@
 
 src\ASF\common\utils\stdio\read.c
 
+src\ASF\sam\drivers\tc\tc.c
+
 src\ASF\sam\drivers\usart\usart.c
 
 src\ASF\common\utils\stdio\write.c

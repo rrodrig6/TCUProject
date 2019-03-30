@@ -96,6 +96,96 @@
 #define BIT6_PIN PIO_PA5_IDX
 #define BIT7_PIN PIO_PA9_IDX
 
+
+/** IRQ priority for PIO (The lower the value, the greater the priority) */
+// [main_def_pio_irq_prior]
+#define IRQ_PRIOR_PIO    0
+// [main_def_pio_irq_prior]
+
+/** ms */
+#define SAMPLE_PERIOD     1000
+
+/** Global g_ul_ms_ticks in milliseconds since start of application */
+// [main_var_ticks]
+volatile uint32_t g_ul_ms_ticks = 0;
+// [main_var_ticks]
+
+/**
+ *  \brief Handler for System Tick interrupt.
+ *
+ *  Process System Tick Event
+ *  Increments the g_ul_ms_ticks counter.
+ */
+// [main_systick_handler]
+void SysTick_Handler(void)
+{
+	g_ul_ms_ticks++;
+}
+// [main_systick_handler]
+
+/**
+ *  Interrupt handler for TC0 interrupt. Toggles the state of LED\#2.
+ */
+// [main_tc0_handler]
+void TC0_Handler(void)
+{
+	volatile uint32_t ul_dummy;
+	bool bit0 = false;
+	bool bit1 = false;
+	bool bit2 = false;
+	bool bit3 = false;
+	bool bit4 = false;
+	bool bit5 = false;
+	bool bit6 = false;
+	bool bit7 = false;
+
+	/* Clear status bit to acknowledge interrupt */
+	ul_dummy = tc_get_status(TC0, 0);
+
+	/* Avoid compiler warning */
+	UNUSED(ul_dummy);
+
+	bit0 = ioport_get_pin_level(BIT0_PIN);
+	bit1 = ioport_get_pin_level(BIT1_PIN);
+	bit2 = ioport_get_pin_level(BIT2_PIN);
+	bit3 = ioport_get_pin_level(BIT3_PIN);
+	bit4 = ioport_get_pin_level(BIT4_PIN);
+	bit5 = ioport_get_pin_level(BIT5_PIN);
+	bit6 = ioport_get_pin_level(BIT6_PIN);
+	bit7 = ioport_get_pin_level(BIT7_PIN);
+	
+	printf("%d%d%d%d%d%d%d%d\r\n", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);
+}
+// [main_tc0_handler]
+
+
+/**
+ *  Configure Timer Counter 0 to generate an interrupt every 250ms.
+ */
+// [main_tc_configure]
+static void configure_tc(void)
+{
+	uint32_t ul_div;
+	uint32_t ul_tcclks;
+	uint32_t ul_sysclk = sysclk_get_cpu_hz();
+
+	/* Configure PMC */
+	pmc_enable_periph_clk(ID_TC0);
+
+	/** Configure TC for a 4Hz frequency and trigger on RC compare. */
+	tc_find_mck_divisor(4, ul_sysclk, &ul_div, &ul_tcclks, ul_sysclk);
+	tc_init(TC0, 0, ul_tcclks | TC_CMR_CPCTRG);
+	tc_write_rc(TC0, 0, (ul_sysclk / ul_div) / 4);
+
+	/* Configure and enable interrupt on RC compare */
+	NVIC_EnableIRQ((IRQn_Type) ID_TC0);
+	tc_enable_interrupt(TC0, 0, TC_IER_CPCS);
+
+	tc_start(TC0, 0);
+}
+// [main_tc_configure]
+
+
 /**
  *  \brief Configure UART console.
  */
@@ -119,6 +209,14 @@ static void configure_console(void)
 	setbuf(stdout, NULL);
 #endif
 }
+
+/*
+static void sample_callback(void)
+{
+	printf("Sample Callback\r\n\r\n");
+	tc_clear_overflow(&TCC0);
+}
+*/
 
 int main(void)
 {
@@ -161,7 +259,12 @@ int main(void)
 	ioport_set_pin_dir(BIT6_PIN, IOPORT_DIR_INPUT);
 	ioport_set_pin_dir(BIT7_PIN, IOPORT_DIR_INPUT);
 	
+	if (SysTick_Config(sysclk_get_cpu_hz() / 1000)) {
+		puts("-F- Systick configuration error\r");
+		while (1);
+	}
 	
+	configure_tc();
 	
 
 	while (true) {
@@ -182,20 +285,7 @@ int main(void)
 				bit7 = ioport_get_pin_level(BIT7_PIN);
 				
 				printf("Read Data\r\n");
-				printf("%d", bit7);
-				printf("%d", bit6);
-				printf("%d", bit5);
-				printf("%d", bit4);
-				printf("%d", bit3);
-				printf("%d", bit2);
-				printf("%d", bit1);
-				printf("%d\r\n", bit0);
-				
-				
-				
-				
-				
-				
+				printf("%d%d%d%d%d%d%d%d\r\n", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);				
 				
 			}
 			else
