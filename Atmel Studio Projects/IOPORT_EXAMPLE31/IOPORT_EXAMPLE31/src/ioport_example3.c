@@ -87,6 +87,15 @@
 
 #define STRING_EOL    "\r\n"
 
+#define BIT0_PIN PIO_PD30_IDX
+#define BIT1_PIN PIO_PD28_IDX
+#define BIT2_PIN PIO_PD27_IDX
+#define BIT3_PIN PIO_PA27_IDX
+#define BIT4_PIN PIO_PD12_IDX
+#define BIT5_PIN PIO_PD11_IDX
+#define BIT6_PIN PIO_PA5_IDX
+#define BIT7_PIN PIO_PA9_IDX
+
 /**
  *  \brief Configure UART console.
  */
@@ -125,6 +134,15 @@ int main(void)
 	bool level = true;
 	bool prevlevel = true;
 	char status [4] = "OFF";
+	
+	bool bit0 = false;
+	bool bit1 = false;
+	bool bit2 = false;
+	bool bit3 = false;
+	bool bit4 = false;
+	bool bit5 = false;
+	bool bit6 = false;
+	bool bit7 = false;
 
 	/* Set output direction on the given LED IOPORTs */
 	ioport_set_pin_dir(EXAMPLE_LED, IOPORT_DIR_OUTPUT);
@@ -132,6 +150,19 @@ int main(void)
 	/* Set direction and pullup on the given button IOPORT */
 	ioport_set_pin_dir(EXAMPLE_BUTTON, IOPORT_DIR_INPUT);
 	ioport_set_pin_mode(EXAMPLE_BUTTON, IOPORT_MODE_PULLUP);
+	
+	// Set counter Y read pins
+	ioport_set_pin_dir(BIT0_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_dir(BIT1_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_dir(BIT2_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_dir(BIT3_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_dir(BIT4_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_dir(BIT5_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_dir(BIT6_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_dir(BIT7_PIN, IOPORT_DIR_INPUT);
+	
+	
+	
 
 	while (true) {
 		/* Get value from button and output it on led */
@@ -140,19 +171,43 @@ int main(void)
 		{
 			if(level)
 			{
-				strncpy(status, "OFF", 3);
+				//strncpy(status, "ON", 3);
+				bit0 = ioport_get_pin_level(BIT0_PIN);
+				bit1 = ioport_get_pin_level(BIT1_PIN);
+				bit2 = ioport_get_pin_level(BIT2_PIN);
+				bit3 = ioport_get_pin_level(BIT3_PIN);
+				bit4 = ioport_get_pin_level(BIT4_PIN);
+				bit5 = ioport_get_pin_level(BIT5_PIN);
+				bit6 = ioport_get_pin_level(BIT6_PIN);
+				bit7 = ioport_get_pin_level(BIT7_PIN);
+				
 				printf("Read Data\r\n");
+				printf("%d", bit7);
+				printf("%d", bit6);
+				printf("%d", bit5);
+				printf("%d", bit4);
+				printf("%d", bit3);
+				printf("%d", bit2);
+				printf("%d", bit1);
+				printf("%d\r\n", bit0);
+				
+				
+				
+				
+				
+				
+				
 			}
 			else
 			{
-				strncpy(status, "ON", 3);
+				//strncpy(status, "OFF", 3);
 			}
 				
-			printf("LED is %s\r\n", status);
+			//printf("Pin is %s\r\n", status);
 		}
 		
 		ioport_set_pin_level(EXAMPLE_LED,
-				level);
+				!level);
 		prevlevel = level;
 	}
 }
