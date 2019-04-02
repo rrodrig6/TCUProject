@@ -167,10 +167,14 @@ static void mdelay(uint32_t ul_dly_ticks)
 	while ((g_ul_ms_ticks - ul_cur_ticks) < ul_dly_ticks);
 }
 
-uint32_t readTimerByte(byteSelect byte)
+uint8_t readTimerByte(byteSelect byte, char ** p_binaryString)
 {
-	uint32_t readByte = 0;
+	uint8_t readByte = 0;
 	uint8_t bit = 0;
+	char bitString[9];
+	char tempString[2];
+	
+	
 	switch(byte)
 	{
 		case Byte1:
@@ -213,20 +217,45 @@ uint32_t readTimerByte(byteSelect byte)
 	mdelay(1);
 	bit = ioport_get_pin_level(BIT0_PIN);
 	readByte = readByte | bit;
+	sprintf(tempString, "%d", bit);
+	strncpy(bitString[7], tempString, 1);
 	bit = ioport_get_pin_level(BIT1_PIN);
 	readByte = readByte | (bit<<1);
+	sprintf(tempString, "%d", bit);
+	strncpy(bitString[6], tempString, 1);
 	bit = ioport_get_pin_level(BIT2_PIN);
 	readByte = readByte | (bit<<2);
+	sprintf(tempString, "%d", bit);
+	strncpy(bitString[5], tempString, 1);
 	bit = ioport_get_pin_level(BIT3_PIN);
 	readByte = readByte | (bit<<3);
+	sprintf(tempString, "%d", bit);
+	strncpy(bitString[4], tempString, 1);
 	bit = ioport_get_pin_level(BIT4_PIN);
 	readByte = readByte | (bit<<4);
+	sprintf(tempString, "%d", bit);
+	strncpy(bitString[3], tempString, 1);
 	bit = ioport_get_pin_level(BIT5_PIN);
 	readByte = readByte | (bit<<5);
+	sprintf(tempString, "%d", bit);
+	strncpy(bitString[2], tempString, 1);
 	bit = ioport_get_pin_level(BIT6_PIN);
 	readByte = readByte | (bit<<6);
+	sprintf(tempString, "%d", bit);
+	strncpy(bitString[1], tempString, 1);
 	bit = ioport_get_pin_level(BIT7_PIN);
 	readByte = readByte | (bit<<7);
+	sprintf(tempString, "%d", bit);
+	strncpy(bitString[0], tempString, 1);
+	
+	strncpy(bitString[8], "\0", 1);
+	strncpy(*p_binaryString, bitString, 9);
+	
+	ioport_set_pin_level(BYTE1_SHIFT,HIGH);
+	ioport_set_pin_level(BYTE2_SHIFT,HIGH);
+	ioport_set_pin_level(BYTE3_SHIFT,HIGH);
+	ioport_set_pin_level(BYTE4_SHIFT,HIGH);
+	
 	return readByte;
 }
 
@@ -245,6 +274,7 @@ int main(void)
 	
 	uint32_t count = 0;
 	uint8_t readByte = 0;
+	char * bitString [9];
 	
 	// Set counter Y read pins
 	ioport_set_pin_dir(BIT0_PIN, IOPORT_DIR_INPUT);
@@ -268,7 +298,6 @@ int main(void)
 	}
 	
 	while (true) {
-		char output [40];
 		volatile uint32_t ul_dummy;
 		
 		// Register counter outputs
@@ -277,76 +306,20 @@ int main(void)
 		ioport_set_pin_level(CLK_SHIFT, LOW);
 		mdelay(1);
 		
-		readByte = readTimerByte(Byte1);
-		
-		printf("[1]%d%d%d%d%d%d%d%d\r\n", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);
-		//sprintf(&output[24],"%d%d%d%d%d%d%d%d", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);
-		
+		readByte = readTimerByte(Byte1, &bitString);
+		printf("[1]%s\r\n", bitString);
 		mdelay(1);
 		
-		// Read Byte2
-		ioport_set_pin_level(BYTE1_SHIFT,HIGH);
-		ioport_set_pin_level(BYTE2_SHIFT,LOW);
-		ioport_set_pin_level(BYTE3_SHIFT,HIGH);
-		ioport_set_pin_level(BYTE4_SHIFT,HIGH);
+		readByte = readTimerByte(Byte2, &bitString);
+		printf("[2]%s\r\n", bitString);
 		mdelay(1);
 		
-		bit0 = ioport_get_pin_level(BIT0_PIN);
-		bit1 = ioport_get_pin_level(BIT1_PIN);
-		bit2 = ioport_get_pin_level(BIT2_PIN);
-		bit3 = ioport_get_pin_level(BIT3_PIN);
-		bit4 = ioport_get_pin_level(BIT4_PIN);
-		bit5 = ioport_get_pin_level(BIT5_PIN);
-		bit6 = ioport_get_pin_level(BIT6_PIN);
-		bit7 = ioport_get_pin_level(BIT7_PIN);
-		printf("[2]%d%d%d%d%d%d%d%d\r\n", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);
-		//sprintf(&output[16],"%d%d%d%d%d%d%d%d", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);
+		readByte = readTimerByte(Byte3, &bitString);
+		printf("[3]%s\r\n", bitString);
 		mdelay(1);
 		
-		// Read Byte3
-		
-		ioport_set_pin_level(BYTE1_SHIFT,HIGH);
-		ioport_set_pin_level(BYTE2_SHIFT,HIGH);
-		ioport_set_pin_level(BYTE3_SHIFT,LOW);
-		ioport_set_pin_level(BYTE4_SHIFT,HIGH);
-		mdelay(1);
-		bit0 = ioport_get_pin_level(BIT0_PIN);
-		bit1 = ioport_get_pin_level(BIT1_PIN);
-		bit2 = ioport_get_pin_level(BIT2_PIN);
-		bit3 = ioport_get_pin_level(BIT3_PIN);
-		bit4 = ioport_get_pin_level(BIT4_PIN);
-		bit5 = ioport_get_pin_level(BIT5_PIN);
-		bit6 = ioport_get_pin_level(BIT6_PIN);
-		bit7 = ioport_get_pin_level(BIT7_PIN);
-		printf("[3]%d%d%d%d%d%d%d%d\r\n", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);
-		//sprintf(&output[8], "%d%d%d%d%d%d%d%d", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);
-		mdelay(1);
-		
-		// Read Byte4
-		
-		ioport_set_pin_level(BYTE1_SHIFT,HIGH);
-		ioport_set_pin_level(BYTE2_SHIFT,HIGH);
-		ioport_set_pin_level(BYTE3_SHIFT,HIGH);
-		ioport_set_pin_level(BYTE4_SHIFT,LOW);
-		mdelay(1);
-		bit0 = ioport_get_pin_level(BIT0_PIN);
-		bit1 = ioport_get_pin_level(BIT1_PIN);
-		bit2 = ioport_get_pin_level(BIT2_PIN);
-		bit3 = ioport_get_pin_level(BIT3_PIN);
-		bit4 = ioport_get_pin_level(BIT4_PIN);
-		bit5 = ioport_get_pin_level(BIT5_PIN);
-		bit6 = ioport_get_pin_level(BIT6_PIN);
-		bit7 = ioport_get_pin_level(BIT7_PIN);
-		
-		printf("[4]%d%d%d%d%d%d%d%d\r\n", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);
-		
-		// Print Output
-		
-		//sprintf(&output[0], "%d%d%d%d%d%d%d%d", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);
-		printf(output);
-		printf("\r\n");
-		mdelay(1);
-		ioport_set_pin_level(BYTE4_SHIFT, HIGH);
+		readByte = readTimerByte(Byte4, &bitString);
+		printf("[4]%s\r\n\r\n", bitString);
 		
 		mdelay(1000);
 	}
