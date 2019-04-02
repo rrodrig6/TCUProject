@@ -19,23 +19,23 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY
   7 .comment      00000059  00000000  00000000  000209e6  2**0
                   CONTENTS, READONLY
-  8 .debug_info   00014640  00000000  00000000  00020a3f  2**0
+  8 .debug_info   00014f3b  00000000  00000000  00020a3f  2**0
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_abbrev 00002851  00000000  00000000  0003507f  2**0
+  9 .debug_abbrev 000028c5  00000000  00000000  0003597a  2**0
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_loc    000045ec  00000000  00000000  000378d0  2**0
+ 10 .debug_loc    00004b10  00000000  00000000  0003823f  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_aranges 00000998  00000000  00000000  0003bebc  2**0
+ 11 .debug_aranges 000009a0  00000000  00000000  0003cd4f  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_ranges 00000be8  00000000  00000000  0003c854  2**0
+ 12 .debug_ranges 00000c38  00000000  00000000  0003d6ef  2**0
                   CONTENTS, READONLY, DEBUGGING
- 13 .debug_macro  0001e67a  00000000  00000000  0003d43c  2**0
+ 13 .debug_macro  0001e67a  00000000  00000000  0003e327  2**0
                   CONTENTS, READONLY, DEBUGGING
- 14 .debug_line   0000a468  00000000  00000000  0005bab6  2**0
+ 14 .debug_line   0000a4c1  00000000  00000000  0005c9a1  2**0
                   CONTENTS, READONLY, DEBUGGING
- 15 .debug_str    00091b3b  00000000  00000000  00065f1e  2**0
+ 15 .debug_str    00091b75  00000000  00000000  00066e62  2**0
                   CONTENTS, READONLY, DEBUGGING
- 16 .debug_frame  00002134  00000000  00000000  000f7a5c  2**2
+ 16 .debug_frame  0000214c  00000000  00000000  000f89d8  2**2
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -1983,6 +1983,8 @@ static inline void usart_serial_getchar(usart_if p_usart, uint8_t *data)
   400ba0:	20400a4c 	.word	0x20400a4c
 
 00400ba4 <main>:
+	return readByte;
+}
 
 
 int main(void)
@@ -2082,7 +2084,7 @@ static inline void stdio_serial_init(volatile void *usart, const usart_serial_op
 	/* Configure debug UART */
 	configure_console();
 	
-	puts("Starting\r\n\r\n");
+	puts("---Starting---\r\n\r\n");
   400c2a:	48b6      	ldr	r0, [pc, #728]	; (400f04 <main+0x360>)
   400c2c:	4bb6      	ldr	r3, [pc, #728]	; (400f08 <main+0x364>)
   400c2e:	4798      	blx	r3
@@ -2206,7 +2208,7 @@ __STATIC_INLINE uint32_t SysTick_Config(uint32_t ticks)
 		bool bit6 = false;
 		bool bit7 = false;
 		
-		/////Declaring outputs for Byte Shifting
+		// Register counter outputs
 		ioport_set_pin_level(CLK_SHIFT, HIGH);
 		mdelay(1);
   400cfe:	2001      	movs	r0, #1
@@ -2227,11 +2229,11 @@ __STATIC_INLINE uint32_t SysTick_Config(uint32_t ticks)
   400d1e:	f44f 0380 	mov.w	r3, #4194304	; 0x400000
   400d22:	f8c9 3030 	str.w	r3, [r9, #48]	; 0x30
   400d26:	f8ca 5030 	str.w	r5, [sl, #48]	; 0x30
+		// Ready Byte1
+		ioport_set_pin_level(BYTE1_SHIFT,LOW);
+		ioport_set_pin_level(BYTE2_SHIFT,HIGH);
 		ioport_set_pin_level(BYTE3_SHIFT,HIGH);
 		ioport_set_pin_level(BYTE4_SHIFT,HIGH);
-		//ioport_set_pin_level(CLK_SHIFT,HIGH);
-		//ioport_set_pin_level(CLK_SHIFT,LOW);
-		//ioport_set_pin_level(CLK_SHIFT,HIGH);
 		mdelay(1);
   400d2a:	2001      	movs	r0, #1
   400d2c:	47a0      	blx	r4
@@ -2245,10 +2247,10 @@ __STATIC_INLINE uint32_t SysTick_Config(uint32_t ticks)
   400d46:	f8da c03c 	ldr.w	ip, [sl, #60]	; 0x3c
   400d4a:	f8da e03c 	ldr.w	lr, [sl, #60]	; 0x3c
   400d4e:	f3c1 7180 	ubfx	r1, r1, #30, #1
+		bit4 = ioport_get_pin_level(BIT4_PIN);
+		bit5 = ioport_get_pin_level(BIT5_PIN);
+		bit6 = ioport_get_pin_level(BIT6_PIN);
 		bit7 = ioport_get_pin_level(BIT7_PIN);
-		
-		
-		
 		
 		printf("[1]%d%d%d%d%d%d%d%d\r\n", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);
   400d52:	9104      	str	r1, [sp, #16]
@@ -2281,11 +2283,11 @@ __STATIC_INLINE uint32_t SysTick_Config(uint32_t ticks)
   400d90:	f44f 0380 	mov.w	r3, #4194304	; 0x400000
   400d94:	f8c9 3030 	str.w	r3, [r9, #48]	; 0x30
   400d98:	f8ca 5030 	str.w	r5, [sl, #48]	; 0x30
+		// Read Byte2
+		ioport_set_pin_level(BYTE1_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE2_SHIFT,LOW);
 		ioport_set_pin_level(BYTE3_SHIFT,HIGH);
 		ioport_set_pin_level(BYTE4_SHIFT,HIGH);
-		//ioport_set_pin_level(CLK_SHIFT,HIGH);
-		//ioport_set_pin_level(CLK_SHIFT,LOW);
-		//ioport_set_pin_level(CLK_SHIFT,HIGH);
 		mdelay(1);
   400d9c:	2001      	movs	r0, #1
   400d9e:	47a0      	blx	r4
@@ -2333,11 +2335,11 @@ __STATIC_INLINE uint32_t SysTick_Config(uint32_t ticks)
   400e06:	f8c9 3034 	str.w	r3, [r9, #52]	; 0x34
 		base->PIO_SODR = arch_ioport_pin_to_mask(pin);
   400e0a:	f8ca 5030 	str.w	r5, [sl, #48]	; 0x30
+		
+		ioport_set_pin_level(BYTE1_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE2_SHIFT,HIGH);
 		ioport_set_pin_level(BYTE3_SHIFT,LOW);
 		ioport_set_pin_level(BYTE4_SHIFT,HIGH);
-		//ioport_set_pin_level(CLK_SHIFT,HIGH);
-		//ioport_set_pin_level(CLK_SHIFT,LOW);
-		//ioport_set_pin_level(CLK_SHIFT,HIGH);
 		mdelay(1);
   400e0e:	2001      	movs	r0, #1
   400e10:	47a0      	blx	r4
@@ -2384,11 +2386,11 @@ __STATIC_INLINE uint32_t SysTick_Config(uint32_t ticks)
   400e78:	f8c9 3030 	str.w	r3, [r9, #48]	; 0x30
 		base->PIO_CODR = arch_ioport_pin_to_mask(pin);
   400e7c:	f8ca 5034 	str.w	r5, [sl, #52]	; 0x34
+		
+		ioport_set_pin_level(BYTE1_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE2_SHIFT,HIGH);
 		ioport_set_pin_level(BYTE3_SHIFT,HIGH);
 		ioport_set_pin_level(BYTE4_SHIFT,LOW);
-		//ioport_set_pin_level(CLK_SHIFT,HIGH);
-		//ioport_set_pin_level(CLK_SHIFT,LOW);
-		//ioport_set_pin_level(CLK_SHIFT,HIGH);
 		mdelay(1);
   400e80:	2001      	movs	r0, #1
   400e82:	47a0      	blx	r4
@@ -2442,10 +2444,10 @@ __STATIC_INLINE uint32_t SysTick_Config(uint32_t ticks)
   400f1c:	000249ef 	.word	0x000249ef
   400f20:	e000ed00 	.word	0xe000ed00
   400f24:	004009d1 	.word	0x004009d1
-  400f28:	00403fc8 	.word	0x00403fc8
+  400f28:	00403fcc 	.word	0x00403fcc
   400f2c:	00400fc1 	.word	0x00400fc1
-  400f30:	00403fe0 	.word	0x00403fe0
-  400f34:	00403ff8 	.word	0x00403ff8
+  400f30:	00403fe4 	.word	0x00403fe4
+  400f34:	00403ffc 	.word	0x00403ffc
   400f38:	400e0e00 	.word	0x400e0e00
   400f3c:	9000      	str	r0, [sp, #0]
   400f3e:	f3ce 23c0 	ubfx	r3, lr, #11, #1
@@ -2453,6 +2455,9 @@ __STATIC_INLINE uint32_t SysTick_Config(uint32_t ticks)
   400f46:	f3c1 2140 	ubfx	r1, r1, #9, #1
   400f4a:	4807      	ldr	r0, [pc, #28]	; (400f68 <main+0x3c4>)
   400f4c:	47b0      	blx	r6
+		
+		// Print Output
+		
 		//sprintf(&output[0], "%d%d%d%d%d%d%d%d", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);
 		printf(output);
   400f4e:	a806      	add	r0, sp, #24
@@ -2472,8 +2477,8 @@ __STATIC_INLINE uint32_t SysTick_Config(uint32_t ticks)
   400f62:	47a0      	blx	r4
   400f64:	e6c7      	b.n	400cf6 <main+0x152>
   400f66:	bf00      	nop
-  400f68:	00404010 	.word	0x00404010
-  400f6c:	00404028 	.word	0x00404028
+  400f68:	00404014 	.word	0x00404014
+  400f6c:	00403fc8 	.word	0x00403fc8
 
 00400f70 <__libc_init_array>:
   400f70:	b570      	push	{r4, r5, r6, lr}
@@ -2657,7 +2662,7 @@ __STATIC_INLINE uint32_t SysTick_Config(uint32_t ticks)
   401114:	f9b4 300c 	ldrsh.w	r3, [r4, #12]
   401118:	b29a      	uxth	r2, r3
   40111a:	e7d2      	b.n	4010c2 <_puts_r+0x3e>
-  40111c:	00403fdc 	.word	0x00403fdc
+  40111c:	00403fe0 	.word	0x00403fe0
 
 00401120 <puts>:
   401120:	4b02      	ldr	r3, [pc, #8]	; (40112c <puts+0xc>)
@@ -7305,35 +7310,35 @@ __STATIC_INLINE uint32_t SysTick_Config(uint32_t ticks)
 00403fb4 <__aeabi_idiv0>:
   403fb4:	4770      	bx	lr
   403fb6:	bf00      	nop
-  403fb8:	72617453 	.word	0x72617453
-  403fbc:	676e6974 	.word	0x676e6974
-  403fc0:	0a0d0a0d 	.word	0x0a0d0a0d
-  403fc4:	00000000 	.word	0x00000000
-  403fc8:	255d315b 	.word	0x255d315b
-  403fcc:	25642564 	.word	0x25642564
+  403fb8:	532d2d2d 	.word	0x532d2d2d
+  403fbc:	74726174 	.word	0x74726174
+  403fc0:	2d676e69 	.word	0x2d676e69
+  403fc4:	0a0d2d2d 	.word	0x0a0d2d2d
+  403fc8:	00000a0d 	.word	0x00000a0d
+  403fcc:	255d315b 	.word	0x255d315b
   403fd0:	25642564 	.word	0x25642564
   403fd4:	25642564 	.word	0x25642564
-  403fd8:	0d642564 	.word	0x0d642564
-  403fdc:	0000000a 	.word	0x0000000a
-  403fe0:	255d325b 	.word	0x255d325b
-  403fe4:	25642564 	.word	0x25642564
+  403fd8:	25642564 	.word	0x25642564
+  403fdc:	0d642564 	.word	0x0d642564
+  403fe0:	0000000a 	.word	0x0000000a
+  403fe4:	255d325b 	.word	0x255d325b
   403fe8:	25642564 	.word	0x25642564
   403fec:	25642564 	.word	0x25642564
-  403ff0:	0d642564 	.word	0x0d642564
-  403ff4:	0000000a 	.word	0x0000000a
-  403ff8:	255d335b 	.word	0x255d335b
-  403ffc:	25642564 	.word	0x25642564
+  403ff0:	25642564 	.word	0x25642564
+  403ff4:	0d642564 	.word	0x0d642564
+  403ff8:	0000000a 	.word	0x0000000a
+  403ffc:	255d335b 	.word	0x255d335b
   404000:	25642564 	.word	0x25642564
   404004:	25642564 	.word	0x25642564
-  404008:	0d642564 	.word	0x0d642564
-  40400c:	0000000a 	.word	0x0000000a
-  404010:	255d345b 	.word	0x255d345b
-  404014:	25642564 	.word	0x25642564
+  404008:	25642564 	.word	0x25642564
+  40400c:	0d642564 	.word	0x0d642564
+  404010:	0000000a 	.word	0x0000000a
+  404014:	255d345b 	.word	0x255d345b
   404018:	25642564 	.word	0x25642564
   40401c:	25642564 	.word	0x25642564
-  404020:	0d642564 	.word	0x0d642564
-  404024:	0000000a 	.word	0x0000000a
-  404028:	00000a0d 	.word	0x00000a0d
+  404020:	25642564 	.word	0x25642564
+  404024:	0d642564 	.word	0x0d642564
+  404028:	0000000a 	.word	0x0000000a
 
 0040402c <_global_impure_ptr>:
   40402c:	20400010 33323130 37363534 42413938     ..@ 0123456789AB

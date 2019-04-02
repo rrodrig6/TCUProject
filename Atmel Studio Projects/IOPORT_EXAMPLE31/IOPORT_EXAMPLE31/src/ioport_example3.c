@@ -113,6 +113,9 @@
 /** ms */
 #define SAMPLE_PERIOD     1000
 
+
+typedef enum {None, Byte1, Byte2, Byte3, Byte4}byteSelect;
+
 /** Global g_ul_ms_ticks in milliseconds since start of application */
 // [main_var_ticks]
 volatile uint32_t g_ul_ms_ticks = 0;
@@ -130,153 +133,6 @@ void SysTick_Handler(void)
 	g_ul_ms_ticks++;
 }
 // [main_systick_handler]
-
-/**
- *  Interrupt handler for TC0 interrupt. Toggles the state of LED\#2.
- */
-// [main_tc0_handler]
-
-/*
-void TC0_Handler(void)
-{
-	char output [40];
-	volatile uint32_t ul_dummy;
-	bool bit0 = false;
-	bool bit1 = false;
-	bool bit2 = false;
-	bool bit3 = false;
-	bool bit4 = false;
-	bool bit5 = false;
-	bool bit6 = false;
-	bool bit7 = false;
-
-	ul_dummy = tc_get_status(TC0, 0);
-
-	UNUSED(ul_dummy);
-	
-	/////Declaring outputs for Byte Shifting 
-	ioport_set_pin_level(CLK_SHIFT, HIGH);
-	mdelay(1);
-	ioport_set_pin_level(CLK_SHIFT, LOW);
-	mdelay(1);
-	
-	ioport_set_pin_level(BYTE1_SHIFT,LOW);
-	ioport_set_pin_level(BYTE2_SHIFT,HIGH);
-	ioport_set_pin_level(BYTE3_SHIFT,HIGH);
-	ioport_set_pin_level(BYTE4_SHIFT,HIGH);
-	//ioport_set_pin_level(CLK_SHIFT,HIGH);
-	//ioport_set_pin_level(CLK_SHIFT,LOW);
-	//ioport_set_pin_level(CLK_SHIFT,HIGH);
-	mdelay(1);
-	bit0 = ioport_get_pin_level(BIT0_PIN);
-	bit1 = ioport_get_pin_level(BIT1_PIN);
-	bit2 = ioport_get_pin_level(BIT2_PIN);
-	bit3 = ioport_get_pin_level(BIT3_PIN);
-	bit4 = ioport_get_pin_level(BIT4_PIN);
-	bit5 = ioport_get_pin_level(BIT5_PIN);
-	bit6 = ioport_get_pin_level(BIT6_PIN);
-	bit7 = ioport_get_pin_level(BIT7_PIN);
-	
-	
-	
-	
-	printf("[1]%d%d%d%d%d%d%d%d\r\n", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);
-	//sprintf(&output[24],"%d%d%d%d%d%d%d%d", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);
-	
-	mdelay(1);
-		
-	ioport_set_pin_level(BYTE1_SHIFT,HIGH);
-	ioport_set_pin_level(BYTE2_SHIFT,LOW);
-	ioport_set_pin_level(BYTE3_SHIFT,HIGH);
-	ioport_set_pin_level(BYTE4_SHIFT,HIGH);
-	//ioport_set_pin_level(CLK_SHIFT,HIGH);
-	//ioport_set_pin_level(CLK_SHIFT,LOW);
-	//ioport_set_pin_level(CLK_SHIFT,HIGH);
-	mdelay(1);
-			
-	bit0 = ioport_get_pin_level(BIT0_PIN);
-	bit1 = ioport_get_pin_level(BIT1_PIN);
-	bit2 = ioport_get_pin_level(BIT2_PIN);
-	bit3 = ioport_get_pin_level(BIT3_PIN);
-	bit4 = ioport_get_pin_level(BIT4_PIN);
-	bit5 = ioport_get_pin_level(BIT5_PIN);
-	bit6 = ioport_get_pin_level(BIT6_PIN);
-	bit7 = ioport_get_pin_level(BIT7_PIN);
-	printf("[2]%d%d%d%d%d%d%d%d\r\n", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);	
-	//sprintf(&output[16],"%d%d%d%d%d%d%d%d", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);
-	mdelay(1);
-	
-	ioport_set_pin_level(BYTE1_SHIFT,HIGH);
-	ioport_set_pin_level(BYTE2_SHIFT,HIGH);
-	ioport_set_pin_level(BYTE3_SHIFT,LOW);
-	ioport_set_pin_level(BYTE4_SHIFT,HIGH);
-	//ioport_set_pin_level(CLK_SHIFT,HIGH);
-	//ioport_set_pin_level(CLK_SHIFT,LOW);
-	//ioport_set_pin_level(CLK_SHIFT,HIGH);
-	mdelay(1);
-	bit0 = ioport_get_pin_level(BIT0_PIN);
-	bit1 = ioport_get_pin_level(BIT1_PIN);
-	bit2 = ioport_get_pin_level(BIT2_PIN);
-	bit3 = ioport_get_pin_level(BIT3_PIN);
-	bit4 = ioport_get_pin_level(BIT4_PIN);
-	bit5 = ioport_get_pin_level(BIT5_PIN);
-	bit6 = ioport_get_pin_level(BIT6_PIN);
-	bit7 = ioport_get_pin_level(BIT7_PIN);
-	printf("[3]%d%d%d%d%d%d%d%d\r\n", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);
-	//sprintf(&output[8], "%d%d%d%d%d%d%d%d", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);			
-	mdelay(1);
-	ioport_set_pin_level(BYTE1_SHIFT,HIGH);
-	ioport_set_pin_level(BYTE2_SHIFT,HIGH);
-	ioport_set_pin_level(BYTE3_SHIFT,HIGH);
-	ioport_set_pin_level(BYTE4_SHIFT,LOW);
-	//ioport_set_pin_level(CLK_SHIFT,HIGH);	
-	//ioport_set_pin_level(CLK_SHIFT,LOW);
-	//ioport_set_pin_level(CLK_SHIFT,HIGH);
-	mdelay(1);
-	bit0 = ioport_get_pin_level(BIT0_PIN);
-	bit1 = ioport_get_pin_level(BIT1_PIN);
-	bit2 = ioport_get_pin_level(BIT2_PIN);
-	bit3 = ioport_get_pin_level(BIT3_PIN);
-	bit4 = ioport_get_pin_level(BIT4_PIN);
-	bit5 = ioport_get_pin_level(BIT5_PIN);
-	bit6 = ioport_get_pin_level(BIT6_PIN);
-	bit7 = ioport_get_pin_level(BIT7_PIN);
-	
-	printf("[4]%d%d%d%d%d%d%d%d\r\n", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);
-	//sprintf(&output[0], "%d%d%d%d%d%d%d%d", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);	
-	printf(output);
-	printf("\r\n");
-	//ioport_set_pin_level(BYTE4_SHIFT,HIGH);
-	//ioport_set_pin_level(BYTE1_SHIFT,LOW);
-}
-// [main_tc0_handler]
-*/
-
-/**
- *  Configure Timer Counter 0 to generate an interrupt every 250ms.
- */
-// [main_tc_configure]
-static void configure_tc(void)
-{
-	uint32_t ul_div;
-	uint32_t ul_tcclks;
-	uint32_t ul_sysclk = sysclk_get_cpu_hz();
-
-	/* Configure PMC */
-	pmc_enable_periph_clk(ID_TC0);
-
-	/** Configure TC for a 4Hz frequency and trigger on RC compare. */
-	tc_find_mck_divisor(4, ul_sysclk, &ul_div, &ul_tcclks, ul_sysclk);
-	tc_init(TC0, 0, ul_tcclks | TC_CMR_CPCTRG);
-	tc_write_rc(TC0, 0, (ul_sysclk / ul_div) / 4);
-
-	/* Configure and enable interrupt on RC compare */
-	NVIC_EnableIRQ((IRQn_Type) ID_TC0);
-	tc_enable_interrupt(TC0, 0, TC_IER_CPCS);
-
-	tc_start(TC0, 0);
-}
-// [main_tc_configure]
 
 
 /**
@@ -311,6 +167,69 @@ static void mdelay(uint32_t ul_dly_ticks)
 	while ((g_ul_ms_ticks - ul_cur_ticks) < ul_dly_ticks);
 }
 
+uint32_t readTimerByte(byteSelect byte)
+{
+	uint32_t readByte = 0;
+	uint8_t bit = 0;
+	switch(byte)
+	{
+		case Byte1:
+			ioport_set_pin_level(BYTE1_SHIFT,LOW);
+			ioport_set_pin_level(BYTE2_SHIFT,HIGH);
+			ioport_set_pin_level(BYTE3_SHIFT,HIGH);
+			ioport_set_pin_level(BYTE4_SHIFT,HIGH);
+			break;
+			
+		case Byte2:
+			ioport_set_pin_level(BYTE1_SHIFT,HIGH);
+			ioport_set_pin_level(BYTE2_SHIFT,LOW);
+			ioport_set_pin_level(BYTE3_SHIFT,HIGH);
+			ioport_set_pin_level(BYTE4_SHIFT,HIGH);
+			break;
+			
+		case Byte3:
+			ioport_set_pin_level(BYTE1_SHIFT,HIGH);
+			ioport_set_pin_level(BYTE2_SHIFT,HIGH);
+			ioport_set_pin_level(BYTE3_SHIFT,LOW);
+			ioport_set_pin_level(BYTE4_SHIFT,HIGH);
+			break;
+			
+		case Byte4:
+			ioport_set_pin_level(BYTE1_SHIFT,HIGH);
+			ioport_set_pin_level(BYTE2_SHIFT,HIGH);
+			ioport_set_pin_level(BYTE3_SHIFT,HIGH);
+			ioport_set_pin_level(BYTE4_SHIFT,LOW);
+			break;	
+			
+		case None:
+		default:
+			ioport_set_pin_level(BYTE1_SHIFT,HIGH);
+			ioport_set_pin_level(BYTE2_SHIFT,HIGH);
+			ioport_set_pin_level(BYTE3_SHIFT,HIGH);
+			ioport_set_pin_level(BYTE4_SHIFT,HIGH);
+			break;
+	}
+	
+	mdelay(1);
+	bit = ioport_get_pin_level(BIT0_PIN);
+	readByte = readByte | bit;
+	bit = ioport_get_pin_level(BIT1_PIN);
+	readByte = readByte | (bit<<1);
+	bit = ioport_get_pin_level(BIT2_PIN);
+	readByte = readByte | (bit<<2);
+	bit = ioport_get_pin_level(BIT3_PIN);
+	readByte = readByte | (bit<<3);
+	bit = ioport_get_pin_level(BIT4_PIN);
+	readByte = readByte | (bit<<4);
+	bit = ioport_get_pin_level(BIT5_PIN);
+	readByte = readByte | (bit<<5);
+	bit = ioport_get_pin_level(BIT6_PIN);
+	readByte = readByte | (bit<<6);
+	bit = ioport_get_pin_level(BIT7_PIN);
+	readByte = readByte | (bit<<7);
+	return readByte;
+}
+
 
 int main(void)
 {
@@ -321,27 +240,11 @@ int main(void)
 	/* Configure debug UART */
 	configure_console();
 	
-	puts("Starting\r\n\r\n");
+	puts("---Starting---\r\n\r\n");
 	
-	bool level = true;
-	bool prevlevel = true;
-	char status [4] = "OFF";
 	
-	bool bit0 = false;
-	bool bit1 = false;
-	bool bit2 = false;
-	bool bit3 = false;
-	bool bit4 = false;
-	bool bit5 = false;
-	bool bit6 = false;
-	bool bit7 = false;
-
-	/* Set output direction on the given LED IOPORTs */
-	ioport_set_pin_dir(EXAMPLE_LED, IOPORT_DIR_OUTPUT);
-
-	/* Set direction and pullup on the given button IOPORT */
-	ioport_set_pin_dir(EXAMPLE_BUTTON, IOPORT_DIR_INPUT);
-	ioport_set_pin_mode(EXAMPLE_BUTTON, IOPORT_MODE_PULLUP);
+	uint32_t count = 0;
+	uint8_t readByte = 0;
 	
 	// Set counter Y read pins
 	ioport_set_pin_dir(BIT0_PIN, IOPORT_DIR_INPUT);
@@ -359,65 +262,33 @@ int main(void)
 	ioport_set_pin_dir(BYTE4_SHIFT, IOPORT_DIR_OUTPUT);
 	
 	ioport_set_pin_dir(CLK_SHIFT, IOPORT_DIR_OUTPUT);
-	//ioport_set_pin_dir(BYTE4_SHIFT, IOPORT_DIR_OUTPUT);
 	if (SysTick_Config(sysclk_get_cpu_hz() / 1000)) {
 		puts("-F- Systick configuration error\r");
 		while (1);
 	}
 	
-	//configure_tc();
-	
-
 	while (true) {
 		char output [40];
 		volatile uint32_t ul_dummy;
-		bool bit0 = false;
-		bool bit1 = false;
-		bool bit2 = false;
-		bool bit3 = false;
-		bool bit4 = false;
-		bool bit5 = false;
-		bool bit6 = false;
-		bool bit7 = false;
 		
-		/////Declaring outputs for Byte Shifting
+		// Register counter outputs
 		ioport_set_pin_level(CLK_SHIFT, HIGH);
 		mdelay(1);
 		ioport_set_pin_level(CLK_SHIFT, LOW);
 		mdelay(1);
 		
-		ioport_set_pin_level(BYTE1_SHIFT,LOW);
-		ioport_set_pin_level(BYTE2_SHIFT,HIGH);
-		ioport_set_pin_level(BYTE3_SHIFT,HIGH);
-		ioport_set_pin_level(BYTE4_SHIFT,HIGH);
-		//ioport_set_pin_level(CLK_SHIFT,HIGH);
-		//ioport_set_pin_level(CLK_SHIFT,LOW);
-		//ioport_set_pin_level(CLK_SHIFT,HIGH);
-		mdelay(1);
-		bit0 = ioport_get_pin_level(BIT0_PIN);
-		bit1 = ioport_get_pin_level(BIT1_PIN);
-		bit2 = ioport_get_pin_level(BIT2_PIN);
-		bit3 = ioport_get_pin_level(BIT3_PIN);
-		bit4 = ioport_get_pin_level(BIT4_PIN);
-		bit5 = ioport_get_pin_level(BIT5_PIN);
-		bit6 = ioport_get_pin_level(BIT6_PIN);
-		bit7 = ioport_get_pin_level(BIT7_PIN);
-		
-		
-		
+		readByte = readTimerByte(Byte1);
 		
 		printf("[1]%d%d%d%d%d%d%d%d\r\n", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);
 		//sprintf(&output[24],"%d%d%d%d%d%d%d%d", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);
 		
 		mdelay(1);
 		
+		// Read Byte2
 		ioport_set_pin_level(BYTE1_SHIFT,HIGH);
 		ioport_set_pin_level(BYTE2_SHIFT,LOW);
 		ioport_set_pin_level(BYTE3_SHIFT,HIGH);
 		ioport_set_pin_level(BYTE4_SHIFT,HIGH);
-		//ioport_set_pin_level(CLK_SHIFT,HIGH);
-		//ioport_set_pin_level(CLK_SHIFT,LOW);
-		//ioport_set_pin_level(CLK_SHIFT,HIGH);
 		mdelay(1);
 		
 		bit0 = ioport_get_pin_level(BIT0_PIN);
@@ -432,13 +303,12 @@ int main(void)
 		//sprintf(&output[16],"%d%d%d%d%d%d%d%d", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);
 		mdelay(1);
 		
+		// Read Byte3
+		
 		ioport_set_pin_level(BYTE1_SHIFT,HIGH);
 		ioport_set_pin_level(BYTE2_SHIFT,HIGH);
 		ioport_set_pin_level(BYTE3_SHIFT,LOW);
 		ioport_set_pin_level(BYTE4_SHIFT,HIGH);
-		//ioport_set_pin_level(CLK_SHIFT,HIGH);
-		//ioport_set_pin_level(CLK_SHIFT,LOW);
-		//ioport_set_pin_level(CLK_SHIFT,HIGH);
 		mdelay(1);
 		bit0 = ioport_get_pin_level(BIT0_PIN);
 		bit1 = ioport_get_pin_level(BIT1_PIN);
@@ -451,13 +321,13 @@ int main(void)
 		printf("[3]%d%d%d%d%d%d%d%d\r\n", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);
 		//sprintf(&output[8], "%d%d%d%d%d%d%d%d", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);
 		mdelay(1);
+		
+		// Read Byte4
+		
 		ioport_set_pin_level(BYTE1_SHIFT,HIGH);
 		ioport_set_pin_level(BYTE2_SHIFT,HIGH);
 		ioport_set_pin_level(BYTE3_SHIFT,HIGH);
 		ioport_set_pin_level(BYTE4_SHIFT,LOW);
-		//ioport_set_pin_level(CLK_SHIFT,HIGH);
-		//ioport_set_pin_level(CLK_SHIFT,LOW);
-		//ioport_set_pin_level(CLK_SHIFT,HIGH);
 		mdelay(1);
 		bit0 = ioport_get_pin_level(BIT0_PIN);
 		bit1 = ioport_get_pin_level(BIT1_PIN);
@@ -469,6 +339,9 @@ int main(void)
 		bit7 = ioport_get_pin_level(BIT7_PIN);
 		
 		printf("[4]%d%d%d%d%d%d%d%d\r\n", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);
+		
+		// Print Output
+		
 		//sprintf(&output[0], "%d%d%d%d%d%d%d%d", bit7, bit6, bit5, bit4, bit3, bit2, bit1, bit0);
 		printf(output);
 		printf("\r\n");
