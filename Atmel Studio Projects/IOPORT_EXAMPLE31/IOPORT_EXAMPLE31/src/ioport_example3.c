@@ -283,13 +283,22 @@ int main(void)
 	
 	// Set counter Y read pins
 	ioport_set_pin_dir(BIT0_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(BIT0_PIN, IOPORT_MODE_PULLDOWN);
 	ioport_set_pin_dir(BIT1_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(BIT1_PIN, IOPORT_MODE_PULLDOWN);
 	ioport_set_pin_dir(BIT2_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(BIT2_PIN, IOPORT_MODE_PULLDOWN);
 	ioport_set_pin_dir(BIT3_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(BIT3_PIN, IOPORT_MODE_PULLDOWN);
 	ioport_set_pin_dir(BIT4_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(BIT4_PIN, IOPORT_MODE_PULLDOWN);
 	ioport_set_pin_dir(BIT5_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(BIT5_PIN, IOPORT_MODE_PULLDOWN);
 	ioport_set_pin_dir(BIT6_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(BIT6_PIN, IOPORT_MODE_PULLDOWN);
 	ioport_set_pin_dir(BIT7_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(BIT7_PIN, IOPORT_MODE_PULLDOWN);
+	
 	/////This is for byte shift
 	ioport_set_pin_dir(BYTE1_SHIFT, IOPORT_DIR_OUTPUT);
 	ioport_set_pin_dir(BYTE2_SHIFT, IOPORT_DIR_OUTPUT);
@@ -306,7 +315,7 @@ int main(void)
 	
 	while (true) {
 		volatile uint32_t ul_dummy;
-		readCount = 0;
+		volatile readCount = 0;
 		
 		// Register counter outputs
 		ioport_set_pin_level(CLK_SHIFT, HIGH);
