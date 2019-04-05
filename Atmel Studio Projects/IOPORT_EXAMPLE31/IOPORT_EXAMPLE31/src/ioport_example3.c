@@ -169,8 +169,8 @@ static void mdelay(uint32_t ul_dly_ticks)
 
 uint8_t readTimerByte(byteSelect byte, char ** p_binaryString)
 {
-	uint8_t readByte = 0;
-	uint8_t bit = 0;
+	uint8_t volatile readByte = 0;
+	uint8_t volatile bit = 0;
 	char bitString[9];
 	char tempString[2];
 	
@@ -217,44 +217,46 @@ uint8_t readTimerByte(byteSelect byte, char ** p_binaryString)
 	mdelay(1);
 	bit = ioport_get_pin_level(BIT0_PIN);
 	readByte = readByte | bit;
-	sprintf(tempString, "%d", bit);
-	strncpy(bitString[7], tempString, 1);
+	sprintf(tempString, "%u", bit);
+	bitString[7]= tempString[0];
 	bit = ioport_get_pin_level(BIT1_PIN);
 	readByte = readByte | (bit<<1);
-	sprintf(tempString, "%d", bit);
-	strncpy(bitString[6], tempString, 1);
+	sprintf(tempString, "%u", bit);
+	bitString[6]= tempString[0];
 	bit = ioport_get_pin_level(BIT2_PIN);
 	readByte = readByte | (bit<<2);
-	sprintf(tempString, "%d", bit);
-	strncpy(bitString[5], tempString, 1);
+	sprintf(tempString, "%u", bit);
+	bitString[5]= tempString[0];
 	bit = ioport_get_pin_level(BIT3_PIN);
 	readByte = readByte | (bit<<3);
-	sprintf(tempString, "%d", bit);
-	strncpy(bitString[4], tempString, 1);
+	sprintf(tempString, "%u", bit);
+	bitString[4]= tempString[0];
 	bit = ioport_get_pin_level(BIT4_PIN);
 	readByte = readByte | (bit<<4);
-	sprintf(tempString, "%d", bit);
-	strncpy(bitString[3], tempString, 1);
+	sprintf(tempString, "%u", bit);
+	bitString[3]= tempString[0];
 	bit = ioport_get_pin_level(BIT5_PIN);
 	readByte = readByte | (bit<<5);
-	sprintf(tempString, "%d", bit);
-	strncpy(bitString[2], tempString, 1);
+	sprintf(tempString, "%u", bit);
+	bitString[2]= tempString[0];
 	bit = ioport_get_pin_level(BIT6_PIN);
 	readByte = readByte | (bit<<6);
-	sprintf(tempString, "%d", bit);
-	strncpy(bitString[1], tempString, 1);
+	sprintf(tempString, "%u", bit);
+	bitString[1]= tempString[0];
 	bit = ioport_get_pin_level(BIT7_PIN);
 	readByte = readByte | (bit<<7);
-	sprintf(tempString, "%d", bit);
-	strncpy(bitString[0], tempString, 1);
+	sprintf(tempString, "%u", bit);
+	bitString[0]= tempString[0];
 	
-	strncpy(bitString[8], "\0", 1);
-	strncpy(*p_binaryString, bitString, 9);
+	bitString[8]='\0';
 	
 	ioport_set_pin_level(BYTE1_SHIFT,HIGH);
 	ioport_set_pin_level(BYTE2_SHIFT,HIGH);
 	ioport_set_pin_level(BYTE3_SHIFT,HIGH);
 	ioport_set_pin_level(BYTE4_SHIFT,HIGH);
+	
+	strncpy(p_binaryString, bitString, 9);
+	
 	
 	return readByte;
 }
@@ -269,12 +271,15 @@ int main(void)
 	/* Configure debug UART */
 	configure_console();
 	
-	puts("---Starting---\r\n\r\n");
+	printf("---Starting---\r\n\r\n");
 	
 	
-	uint32_t count = 0;
-	uint8_t readByte = 0;
-	char * bitString [9];
+	uint32_t volatile count = 0;
+	uint8_t volatile readByte = 0;
+	uint32_t readCount = 0;
+	char * p_bitString;
+	char bitString[9] = "ABCDEFGH";
+	p_bitString = &bitString;
 	
 	// Set counter Y read pins
 	ioport_set_pin_dir(BIT0_PIN, IOPORT_DIR_INPUT);
@@ -293,12 +298,15 @@ int main(void)
 	
 	ioport_set_pin_dir(CLK_SHIFT, IOPORT_DIR_OUTPUT);
 	if (SysTick_Config(sysclk_get_cpu_hz() / 1000)) {
-		puts("-F- Systick configuration error\r");
+		printf("-F- Systick configuration error\r\n\r\n");
 		while (1);
 	}
 	
+	printf("I/O Configured\r\n\r\n");
+	
 	while (true) {
 		volatile uint32_t ul_dummy;
+		readCount = 0;
 		
 		// Register counter outputs
 		ioport_set_pin_level(CLK_SHIFT, HIGH);
@@ -306,20 +314,27 @@ int main(void)
 		ioport_set_pin_level(CLK_SHIFT, LOW);
 		mdelay(1);
 		
-		readByte = readTimerByte(Byte1, &bitString);
-		printf("[1]%s\r\n", bitString);
+		
+		readByte = readTimerByte(Byte1, p_bitString);
+		readCount += (uint32_t) readByte;
+		printf("[1]%s : %u\r\n", bitString, readByte);
 		mdelay(1);
 		
-		readByte = readTimerByte(Byte2, &bitString);
-		printf("[2]%s\r\n", bitString);
+		readByte = readTimerByte(Byte2, p_bitString);
+		readCount += ((uint32_t) readByte) << 8;
+		printf("[2]%s : %u\r\n", bitString, readByte);
 		mdelay(1);
 		
-		readByte = readTimerByte(Byte3, &bitString);
-		printf("[3]%s\r\n", bitString);
+		readByte = readTimerByte(Byte3, p_bitString);
+		readCount += ((uint32_t) readByte) << 16;
+		printf("[3]%s : %u\r\n", bitString, readByte);
 		mdelay(1);
 		
-		readByte = readTimerByte(Byte4, &bitString);
-		printf("[4]%s\r\n\r\n", bitString);
+		readByte = readTimerByte(Byte4, p_bitString);
+		readCount += ((uint32_t) readByte) << 24;
+		printf("[4]%s : %u\r\n", bitString, readByte);
+		
+		printf("Count: %u\r\n\r\n", readCount);
 		
 		mdelay(1000);
 	}
