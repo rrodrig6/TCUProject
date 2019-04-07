@@ -102,7 +102,9 @@
 #define BYTE4_SHIFT PIO_PA24_IDX    //Pin 16
 ////Declaring the shift reg, the clear
 #define CLK_SHIFT PIO_PD24_IDX    //Pin 14
-#define CLEAR PIO_PD25_IDX        //Pin 12
+#define COUNT_CLEAR_PIN PIO_PA13_IDX        //Pin 12
+#define COUNT_READY_PIN PIO_PC19_IDX
+#define COUNT_READY_MASK PIO_PC19
 
 
 /** IRQ priority for PIO (The lower the value, the greater the priority) */
@@ -121,50 +123,19 @@ typedef enum {None, Byte1, Byte2, Byte3, Byte4}byteSelect;
 volatile uint32_t g_ul_ms_ticks = 0;
 // [main_var_ticks]
 
-/**
- *  \brief Handler for System Tick interrupt.
- *
- *  Process System Tick Event
- *  Increments the g_ul_ms_ticks counter.
- */
-// [main_systick_handler]
-void SysTick_Handler(void)
-{
-	g_ul_ms_ticks++;
-}
-// [main_systick_handler]
-
-
-/**
- *  \brief Configure UART console.
- */
-static void configure_console(void)
-{
-	const usart_serial_options_t uart_serial_options = {
-		.baudrate = CONF_UART_BAUDRATE,
-#if (defined CONF_UART_CHAR_LENGTH)
-		.charlength = CONF_UART_CHAR_LENGTH,
-#endif
-		.paritytype = CONF_UART_PARITY,
-#if (defined CONF_UART_STOP_BITS)
-		.stopbits = CONF_UART_STOP_BITS,
-#endif
-	};
-
-	/* Configure UART console. */
-	sysclk_enable_peripheral_clock(CONSOLE_UART_ID);
-	stdio_serial_init(CONF_UART, &uart_serial_options);
-#if defined(__GNUC__)
-	setbuf(stdout, NULL);
-#endif
-}
-
 static void mdelay(uint32_t ul_dly_ticks)
 {
 	uint32_t ul_cur_ticks;
 
 	ul_cur_ticks = g_ul_ms_ticks;
 	while ((g_ul_ms_ticks - ul_cur_ticks) < ul_dly_ticks);
+}
+
+static void waitCount(uint32_t ticks)
+{
+	for(uint32_t volatile i = ticks; i>0; i--)
+	{
+	}
 }
 
 uint8_t readTimerByte(byteSelect byte, char ** p_binaryString)
@@ -178,43 +149,43 @@ uint8_t readTimerByte(byteSelect byte, char ** p_binaryString)
 	switch(byte)
 	{
 		case Byte1:
-			ioport_set_pin_level(BYTE1_SHIFT,LOW);
-			ioport_set_pin_level(BYTE2_SHIFT,HIGH);
-			ioport_set_pin_level(BYTE3_SHIFT,HIGH);
-			ioport_set_pin_level(BYTE4_SHIFT,HIGH);
-			break;
-			
+		ioport_set_pin_level(BYTE1_SHIFT,LOW);
+		ioport_set_pin_level(BYTE2_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE3_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE4_SHIFT,HIGH);
+		break;
+		
 		case Byte2:
-			ioport_set_pin_level(BYTE1_SHIFT,HIGH);
-			ioport_set_pin_level(BYTE2_SHIFT,LOW);
-			ioport_set_pin_level(BYTE3_SHIFT,HIGH);
-			ioport_set_pin_level(BYTE4_SHIFT,HIGH);
-			break;
-			
+		ioport_set_pin_level(BYTE1_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE2_SHIFT,LOW);
+		ioport_set_pin_level(BYTE3_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE4_SHIFT,HIGH);
+		break;
+		
 		case Byte3:
-			ioport_set_pin_level(BYTE1_SHIFT,HIGH);
-			ioport_set_pin_level(BYTE2_SHIFT,HIGH);
-			ioport_set_pin_level(BYTE3_SHIFT,LOW);
-			ioport_set_pin_level(BYTE4_SHIFT,HIGH);
-			break;
-			
+		ioport_set_pin_level(BYTE1_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE2_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE3_SHIFT,LOW);
+		ioport_set_pin_level(BYTE4_SHIFT,HIGH);
+		break;
+		
 		case Byte4:
-			ioport_set_pin_level(BYTE1_SHIFT,HIGH);
-			ioport_set_pin_level(BYTE2_SHIFT,HIGH);
-			ioport_set_pin_level(BYTE3_SHIFT,HIGH);
-			ioport_set_pin_level(BYTE4_SHIFT,LOW);
-			break;	
-			
+		ioport_set_pin_level(BYTE1_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE2_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE3_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE4_SHIFT,LOW);
+		break;
+		
 		case None:
 		default:
-			ioport_set_pin_level(BYTE1_SHIFT,HIGH);
-			ioport_set_pin_level(BYTE2_SHIFT,HIGH);
-			ioport_set_pin_level(BYTE3_SHIFT,HIGH);
-			ioport_set_pin_level(BYTE4_SHIFT,HIGH);
-			break;
+		ioport_set_pin_level(BYTE1_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE2_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE3_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE4_SHIFT,HIGH);
+		break;
 	}
 	
-	mdelay(1);
+	waitCount(10000);
 	bit = ioport_get_pin_level(BIT0_PIN);
 	readByte = readByte | bit;
 	sprintf(tempString, "%u", bit);
@@ -261,6 +232,88 @@ uint8_t readTimerByte(byteSelect byte, char ** p_binaryString)
 	return readByte;
 }
 
+static void CountReady_Handler(uint32_t id, uint32_t mask)
+{
+	if (ID_PIOC == id && COUNT_READY_MASK == mask) {
+		uint8_t readByte = 0;
+		uint32_t readCount = 0;
+		char * p_bitString;
+		char bitString[9] = "";
+		p_bitString = &bitString;
+		
+		// Register counter outputs
+		ioport_set_pin_level(CLK_SHIFT, HIGH);
+		waitCount(10000);
+		ioport_set_pin_level(CLK_SHIFT, LOW);
+		waitCount(10000);
+		
+		readByte = readTimerByte(Byte1, p_bitString);
+		readCount += (uint32_t) readByte;
+		printf("[1]%s : %u\r\n", bitString, readByte);
+		waitCount(10000);
+		
+		readByte = readTimerByte(Byte2, p_bitString);
+		readCount += ((uint32_t) readByte) << 8;
+		printf("[2]%s : %u\r\n", bitString, readByte);
+		waitCount(10000);
+		
+		readByte = readTimerByte(Byte3, p_bitString);
+		readCount += ((uint32_t) readByte) << 16;
+		printf("[3]%s : %u\r\n", bitString, readByte);
+		waitCount(10000);
+		
+		readByte = readTimerByte(Byte4, p_bitString);
+		readCount += ((uint32_t) readByte) << 24;
+		printf("[4]%s : %u\r\n", bitString, readByte);
+		
+		// Reset HW counter
+		ioport_set_pin_level(COUNT_CLEAR_PIN, LOW);
+		waitCount(10000);
+		ioport_set_pin_level(COUNT_CLEAR_PIN, HIGH);
+		
+		printf("Count: %u\r\n", readCount);
+		printf("\r\n");
+	}
+}
+
+/**
+ *  \brief Handler for System Tick interrupt.
+ *
+ *  Process System Tick Event
+ *  Increments the g_ul_ms_ticks counter.
+ */
+// [main_systick_handler]
+void SysTick_Handler(void)
+{
+	g_ul_ms_ticks++;
+}
+// [main_systick_handler]
+
+
+/**
+ *  \brief Configure UART console.
+ */
+static void configure_console(void)
+{
+	const usart_serial_options_t uart_serial_options = {
+		.baudrate = CONF_UART_BAUDRATE,
+#if (defined CONF_UART_CHAR_LENGTH)
+		.charlength = CONF_UART_CHAR_LENGTH,
+#endif
+		.paritytype = CONF_UART_PARITY,
+#if (defined CONF_UART_STOP_BITS)
+		.stopbits = CONF_UART_STOP_BITS,
+#endif
+	};
+
+	/* Configure UART console. */
+	sysclk_enable_peripheral_clock(CONSOLE_UART_ID);
+	stdio_serial_init(CONF_UART, &uart_serial_options);
+#if defined(__GNUC__)
+	setbuf(stdout, NULL);
+#endif
+}
+
 
 int main(void)
 {
@@ -274,12 +327,9 @@ int main(void)
 	printf("---Starting---\r\n\r\n");
 	
 	
-	uint32_t volatile count = 0;
-	uint8_t volatile readByte = 0;
-	uint32_t readCount = 0;
-	char * p_bitString;
-	char bitString[9] = "ABCDEFGH";
-	p_bitString = &bitString;
+	
+	
+	bool countResetPinValue = true;
 	
 	// Set counter Y read pins
 	ioport_set_pin_dir(BIT0_PIN, IOPORT_DIR_INPUT);
@@ -306,6 +356,23 @@ int main(void)
 	ioport_set_pin_dir(BYTE4_SHIFT, IOPORT_DIR_OUTPUT);
 	
 	ioport_set_pin_dir(CLK_SHIFT, IOPORT_DIR_OUTPUT);
+	
+	ioport_set_pin_dir(COUNT_CLEAR_PIN, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_mode(COUNT_CLEAR_PIN, IOPORT_MODE_PULLDOWN);
+	
+	ioport_set_pin_level(COUNT_CLEAR_PIN, countResetPinValue);
+	
+	//Configure CountRead Pin and Interrupt
+	ioport_set_pin_dir(COUNT_READY_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(COUNT_READY_PIN, (IOPORT_MODE_PULLUP | IOPORT_MODE_DEBOUNCE) );
+	ioport_set_pin_sense_mode(COUNT_READY_PIN, (IOPORT_SENSE_RISING));
+	pio_handler_set(PIOC, ID_PIOC,
+	COUNT_READY_MASK, (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
+	NVIC_EnableIRQ((IRQn_Type) ID_PIOC);
+	pio_handler_set_priority(PIOC,
+	(IRQn_Type) ID_PIOC, IRQ_PRIOR_PIO);
+	pio_enable_interrupt(PIOC, COUNT_READY_MASK);
+	
 	if (SysTick_Config(sysclk_get_cpu_hz() / 1000)) {
 		printf("-F- Systick configuration error\r\n\r\n");
 		while (1);
@@ -314,37 +381,6 @@ int main(void)
 	printf("I/O Configured\r\n\r\n");
 	
 	while (true) {
-		volatile uint32_t ul_dummy;
-		volatile readCount = 0;
 		
-		// Register counter outputs
-		ioport_set_pin_level(CLK_SHIFT, HIGH);
-		mdelay(1);
-		ioport_set_pin_level(CLK_SHIFT, LOW);
-		mdelay(1);
-		
-		
-		readByte = readTimerByte(Byte1, p_bitString);
-		readCount += (uint32_t) readByte;
-		printf("[1]%s : %u\r\n", bitString, readByte);
-		mdelay(1);
-		
-		readByte = readTimerByte(Byte2, p_bitString);
-		readCount += ((uint32_t) readByte) << 8;
-		printf("[2]%s : %u\r\n", bitString, readByte);
-		mdelay(1);
-		
-		readByte = readTimerByte(Byte3, p_bitString);
-		readCount += ((uint32_t) readByte) << 16;
-		printf("[3]%s : %u\r\n", bitString, readByte);
-		mdelay(1);
-		
-		readByte = readTimerByte(Byte4, p_bitString);
-		readCount += ((uint32_t) readByte) << 24;
-		printf("[4]%s : %u\r\n", bitString, readByte);
-		
-		printf("Count: %u\r\n\r\n", readCount);
-		
-		mdelay(1000);
 	}
 }
