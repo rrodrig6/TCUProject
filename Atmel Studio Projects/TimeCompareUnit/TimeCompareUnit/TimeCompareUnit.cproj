@@ -35,11 +35,14 @@
     <option id="common.services.basic.clock" value="Add" config="" content-id="Atmel.ASF" />
     <option id="common.services.basic.gpio" value="Add" config="" content-id="Atmel.ASF" />
     <option id="common.services.ioport" value="Add" config="" content-id="Atmel.ASF" />
+    <option id="common.utils.interrupt" value="Add" config="" content-id="Atmel.ASF" />
     <option id="common.utils.stdio.stdio_serial" value="Add" config="" content-id="Atmel.ASF" />
     <option id="sam.components.ethernet_phy.ksz8081rna" value="Add" config="" content-id="Atmel.ASF" />
     <option id="sam.drivers.mpu" value="Add" config="" content-id="Atmel.ASF" />
     <option id="sam.drivers.pio" value="Add" config="" content-id="Atmel.ASF" />
+    <option id="sam.drivers.tc" value="Add" config="" content-id="Atmel.ASF" />
     <option id="sam.drivers.uart" value="Add" config="" content-id="Atmel.ASF" />
+    <option id="sam.drivers.tc.appnote" value="Add" config="" content-id="Atmel.ASF" />
     <option id="sam.utils.cmsis.same70.source.template" value="Add" config="" content-id="Atmel.ASF" />
     <option id="thirdparty.lwip.raw_basic_http_example" value="Add" config="" content-id="Atmel.ASF" />
     <option id="thirdparty.lwip.version" value="Add" config="1.4.1" content-id="Atmel.ASF" />
@@ -54,6 +57,10 @@
     <configuration key="config.compiler.iarewarm.sys_stack_size" value="0x400" default="0x400" content-id="Atmel.ASF" />
     <configuration key="config.compiler.as5_arm.create_aux" value="no" default="no" content-id="Atmel.ASF" />
     <configuration key="config.thirdparty.lwip.version" value="1.4.1" default="1.4.1" content-id="Atmel.ASF" />
+    <configuration key="config.compiler.armgcc.fpu_used" value="yes" default="yes" content-id="Atmel.ASF" />
+    <configuration key="config.compiler.armgcc.printf" value="iprintf" default="iprintf" content-id="Atmel.ASF" />
+    <configuration key="config.compiler.armgcc.scanf" value="iscanf" default="iscanf" content-id="Atmel.ASF" />
+    <configuration key="config.sam.pio.pio_handler" value="yes" default="yes" content-id="Atmel.ASF" />
   </configurations>
   <files>
     <file path="src/ASF/common/boards/board.h" framework="" version="" source="common/boards/board.h" changed="False" content-id="Atmel.ASF" />
@@ -373,11 +380,12 @@
     <file path="src/network/timer_mgt.c" framework="" version="" source="thirdparty/lwip/raw_http_basic_example/network/timer_mgt.c" changed="False" content-id="Atmel.ASF" />
     <file path="src/network/timer_mgt.h" framework="" version="" source="thirdparty/lwip/raw_http_basic_example/network/timer_mgt.h" changed="False" content-id="Atmel.ASF" />
     <file path="src/raw_http_basic_example.c" framework="" version="" source="thirdparty/lwip/raw_http_basic_example/raw_http_basic_example.c" changed="False" content-id="Atmel.ASF" />
-    <file path="src/config/conf_board.h" framework="" version="" source="thirdparty/lwip/raw_http_basic_example/same70q21_same70_xplained/conf_board.h" changed="False" content-id="Atmel.ASF" />
+    <file path="src/Config/conf_board.h" framework="" version="3.40.0" source="sam\drivers\tc\tc_capture_waveform_example\sam4e16e_sam4e_ek\conf_board.h" changed="False" content-id="Atmel.ASF" />
     <file path="src/config/conf_clock.h" framework="" version="" source="thirdparty/lwip/raw_http_basic_example/same70q21_same70_xplained/conf_clock.h" changed="False" content-id="Atmel.ASF" />
     <file path="src/config/conf_eth.h" framework="" version="" source="thirdparty/lwip/raw_http_basic_example/same70q21_same70_xplained/conf_eth.h" changed="False" content-id="Atmel.ASF" />
     <file path="src/config/conf_uart_serial.h" framework="" version="" source="thirdparty/lwip/raw_http_basic_example/same70q21_same70_xplained/conf_uart_serial.h" changed="False" content-id="Atmel.ASF" />
     <file path="src/config/lwipopts.h" framework="" version="" source="thirdparty/lwip/raw_http_basic_example/same70q21_same70_xplained/lwipopts.h" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/sam/drivers/tc/tc_capture_waveform_example/tc_capture_waveform_example.h" framework="" version="3.40.0" source="sam\drivers\tc\tc_capture_waveform_example\tc_capture_waveform_example.h" changed="False" content-id="Atmel.ASF" />
   </files>
   <documentation help="http://asf.atmel.com/docs/3.40.0/thirdparty.lwip.raw_basic_http_example.same70_xplained/html/index.html" />
   <offline-documentation help="" />
@@ -736,6 +744,7 @@
     <Folder Include="src\ASF\sam\drivers\pio\" />
     <Folder Include="src\ASF\sam\drivers\pmc\" />
     <Folder Include="src\ASF\sam\drivers\tc\" />
+    <Folder Include="src\ASF\sam\drivers\tc\tc_capture_waveform_example\" />
     <Folder Include="src\ASF\sam\drivers\uart\" />
     <Folder Include="src\ASF\sam\drivers\usart\" />
     <Folder Include="src\ASF\sam\utils\" />
@@ -791,6 +800,12 @@
     <Folder Include="src\network\httpserver\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="src\config\conf_example.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="src\ASF\sam\drivers\tc\tc_capture_waveform_example\tc_capture_waveform_example.h">
+      <SubType>compile</SubType>
+    </None>
     <None Include="src\asf.h">
       <SubType>compile</SubType>
     </None>

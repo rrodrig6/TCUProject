@@ -81,6 +81,9 @@
  *
  */
 
+#include <asf.h>
+#include <string.h>
+#include "conf_example.h"
 #include "sysclk.h"
 #include "ioport.h"
 #include "stdio_serial.h"
@@ -91,6 +94,210 @@
 #define STRING_HEADER "-- Raw HTTP Basic Example --"STRING_EOL \
 		"-- "BOARD_NAME" --"STRING_EOL \
 		"-- Compiled: "__DATE__" "__TIME__" --"STRING_EOL
+
+//////Declaring the 8-bits to read /////////////////////
+#define BIT0_PIN PIO_PD30_IDX      //Pin 28
+#define BIT1_PIN PIO_PD28_IDX      //Pin 27
+#define BIT2_PIN PIO_PD27_IDX      //Pin 26
+#define BIT3_PIN PIO_PA27_IDX      //Pin 25 
+#define BIT4_PIN PIO_PD12_IDX      //Pin 24
+#define BIT5_PIN PIO_PD11_IDX      //Pin 23
+#define BIT6_PIN PIO_PA5_IDX       //Pin 22
+#define BIT7_PIN PIO_PA9_IDX       //Pin 21
+/////Declaring the 4 GPIOs to cycle through bytes///////
+#define BYTE1_SHIFT PIO_PB3_IDX    //Pin 20
+#define BYTE2_SHIFT PIO_PD21_IDX    //Pin 19
+#define BYTE3_SHIFT PIO_PD22_IDX    //Pin 18
+#define BYTE4_SHIFT PIO_PA24_IDX    //Pin 16
+////Declaring the shift reg, the clear
+#define CLK_SHIFT PIO_PD24_IDX    //Pin 14
+#define COUNT_CLEAR_PIN PIO_PA13_IDX        //Pin 12
+#define COUNT_READY_PIN PIO_PC19_IDX
+#define COUNT_READY_MASK PIO_PC19
+
+
+/** IRQ priority for PIO (The lower the value, the greater the priority) */
+// [main_def_pio_irq_prior]
+#define IRQ_PRIOR_PIO    0
+// [main_def_pio_irq_prior]
+
+/** ms */
+#define SAMPLE_PERIOD     1000
+
+
+typedef enum {None, Byte1, Byte2, Byte3, Byte4}byteSelect;
+
+/** Global g_ul_ms_ticks in milliseconds since start of application */
+// [main_var_ticks]
+volatile uint32_t g_ul_ms_ticks = 0;
+// [main_var_ticks]
+
+static void mdelay(uint32_t ul_dly_ticks)
+{
+	uint32_t ul_cur_ticks;
+
+	ul_cur_ticks = g_ul_ms_ticks;
+	while ((g_ul_ms_ticks - ul_cur_ticks) < ul_dly_ticks);
+}
+
+static void waitCount(uint32_t ticks)
+{
+	for(uint32_t volatile i = ticks; i>0; i--)
+	{
+	}
+}
+
+uint8_t readTimerByte(byteSelect byte, char ** p_binaryString)
+{
+	uint8_t volatile readByte = 0;
+	uint8_t volatile bit = 0;
+	char bitString[9];
+	char tempString[2];
+	
+	
+	switch(byte)
+	{
+		case Byte1:
+		ioport_set_pin_level(BYTE1_SHIFT,LOW);
+		ioport_set_pin_level(BYTE2_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE3_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE4_SHIFT,HIGH);
+		break;
+		
+		case Byte2:
+		ioport_set_pin_level(BYTE1_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE2_SHIFT,LOW);
+		ioport_set_pin_level(BYTE3_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE4_SHIFT,HIGH);
+		break;
+		
+		case Byte3:
+		ioport_set_pin_level(BYTE1_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE2_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE3_SHIFT,LOW);
+		ioport_set_pin_level(BYTE4_SHIFT,HIGH);
+		break;
+		
+		case Byte4:
+		ioport_set_pin_level(BYTE1_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE2_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE3_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE4_SHIFT,LOW);
+		break;
+		
+		case None:
+		default:
+		ioport_set_pin_level(BYTE1_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE2_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE3_SHIFT,HIGH);
+		ioport_set_pin_level(BYTE4_SHIFT,HIGH);
+		break;
+	}
+	
+	waitCount(10000);
+	bit = ioport_get_pin_level(BIT0_PIN);
+	readByte = readByte | bit;
+	sprintf(tempString, "%u", bit);
+	bitString[7]= tempString[0];
+	bit = ioport_get_pin_level(BIT1_PIN);
+	readByte = readByte | (bit<<1);
+	sprintf(tempString, "%u", bit);
+	bitString[6]= tempString[0];
+	bit = ioport_get_pin_level(BIT2_PIN);
+	readByte = readByte | (bit<<2);
+	sprintf(tempString, "%u", bit);
+	bitString[5]= tempString[0];
+	bit = ioport_get_pin_level(BIT3_PIN);
+	readByte = readByte | (bit<<3);
+	sprintf(tempString, "%u", bit);
+	bitString[4]= tempString[0];
+	bit = ioport_get_pin_level(BIT4_PIN);
+	readByte = readByte | (bit<<4);
+	sprintf(tempString, "%u", bit);
+	bitString[3]= tempString[0];
+	bit = ioport_get_pin_level(BIT5_PIN);
+	readByte = readByte | (bit<<5);
+	sprintf(tempString, "%u", bit);
+	bitString[2]= tempString[0];
+	bit = ioport_get_pin_level(BIT6_PIN);
+	readByte = readByte | (bit<<6);
+	sprintf(tempString, "%u", bit);
+	bitString[1]= tempString[0];
+	bit = ioport_get_pin_level(BIT7_PIN);
+	readByte = readByte | (bit<<7);
+	sprintf(tempString, "%u", bit);
+	bitString[0]= tempString[0];
+	
+	bitString[8]='\0';
+	
+	ioport_set_pin_level(BYTE1_SHIFT,HIGH);
+	ioport_set_pin_level(BYTE2_SHIFT,HIGH);
+	ioport_set_pin_level(BYTE3_SHIFT,HIGH);
+	ioport_set_pin_level(BYTE4_SHIFT,HIGH);
+	
+	strncpy(p_binaryString, bitString, 9);
+	
+	
+	return readByte;
+}
+
+static void CountReady_Handler(uint32_t id, uint32_t mask)
+{
+	if (ID_PIOC == id && COUNT_READY_MASK == mask) {
+		uint8_t readByte = 0;
+		uint32_t readCount = 0;
+		char * p_bitString;
+		char bitString[9] = "";
+		p_bitString = &bitString;
+		
+		// Register counter outputs
+		ioport_set_pin_level(CLK_SHIFT, HIGH);
+		waitCount(10000);
+		ioport_set_pin_level(CLK_SHIFT, LOW);
+		waitCount(10000);
+		
+		readByte = readTimerByte(Byte1, p_bitString);
+		readCount += (uint32_t) readByte;
+		printf("[1]%s : %u\r\n", bitString, readByte);
+		waitCount(10000);
+		
+		readByte = readTimerByte(Byte2, p_bitString);
+		readCount += ((uint32_t) readByte) << 8;
+		printf("[2]%s : %u\r\n", bitString, readByte);
+		waitCount(10000);
+		
+		readByte = readTimerByte(Byte3, p_bitString);
+		readCount += ((uint32_t) readByte) << 16;
+		printf("[3]%s : %u\r\n", bitString, readByte);
+		waitCount(10000);
+		
+		readByte = readTimerByte(Byte4, p_bitString);
+		readCount += ((uint32_t) readByte) << 24;
+		printf("[4]%s : %u\r\n", bitString, readByte);
+		
+		// Reset HW counter
+		ioport_set_pin_level(COUNT_CLEAR_PIN, LOW);
+		waitCount(10000);
+		ioport_set_pin_level(COUNT_CLEAR_PIN, HIGH);
+		
+		printf("Count: %u\r\n", readCount);
+		printf("\r\n");
+	}
+}
+
+/**
+ *  \brief Handler for System Tick interrupt.
+ *
+ *  Process System Tick Event
+ *  Increments the g_ul_ms_ticks counter.
+ */
+// [main_systick_handler]
+void SysTick_Handler(void)
+{
+	g_ul_ms_ticks++;
+}
+// [main_systick_handler]
+
 
 /**
  *  \brief Configure UART console.
@@ -130,17 +337,78 @@ int main(void)
 	configure_console();
 
 	/* Print example information. */
-	puts(STRING_HEADER);
+	//puts(STRING_HEADER);
 
 	/* Bring up the ethernet interface & initialize timer0, channel0. */
-	init_ethernet();
+	//init_ethernet();
 
 	/* Bring up the web server. */
-	httpd_init();
+	//httpd_init();
+	
+	printf("---Starting---\r\n\r\n");
+	
+	
+	
+	
+	bool countResetPinValue = true;
+	
+	// Set counter Y read pins
+	ioport_set_pin_dir(BIT0_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(BIT0_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(BIT1_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(BIT1_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(BIT2_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(BIT2_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(BIT3_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(BIT3_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(BIT4_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(BIT4_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(BIT5_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(BIT5_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(BIT6_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(BIT6_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(BIT7_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(BIT7_PIN, IOPORT_MODE_PULLDOWN);
+	
+	/////This is for byte shift
+	ioport_set_pin_dir(BYTE1_SHIFT, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(BYTE2_SHIFT, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(BYTE3_SHIFT, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(BYTE4_SHIFT, IOPORT_DIR_OUTPUT);
+	
+	ioport_set_pin_dir(CLK_SHIFT, IOPORT_DIR_OUTPUT);
+	
+	ioport_set_pin_dir(COUNT_CLEAR_PIN, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_mode(COUNT_CLEAR_PIN, IOPORT_MODE_PULLDOWN);
+	
+	ioport_set_pin_level(COUNT_CLEAR_PIN, countResetPinValue);
+	
+	//Configure CountRead Pin and Interrupt
+	ioport_set_pin_dir(COUNT_READY_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(COUNT_READY_PIN, (IOPORT_MODE_PULLUP | IOPORT_MODE_DEBOUNCE) );
+	ioport_set_pin_sense_mode(COUNT_READY_PIN, (IOPORT_SENSE_RISING));
+	pio_handler_set(PIOC, ID_PIOC,
+	COUNT_READY_MASK, (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
+	NVIC_EnableIRQ((IRQn_Type) ID_PIOC);
+	pio_handler_set_priority(PIOC,
+	(IRQn_Type) ID_PIOC, IRQ_PRIOR_PIO);
+	pio_enable_interrupt(PIOC, COUNT_READY_MASK);
+	
+	if (SysTick_Config(sysclk_get_cpu_hz() / 1000)) {
+		printf("-F- Systick configuration error\r\n\r\n");
+		while (1);
+	}
+	
+	printf("I/O Configured\r\n\r\n");
+	
+	while (true) {
+		
+	}
 
-	/* Program main loop. */
+	/* Program main loop.
 	while (1) {
-		/* Check for input packet and process it. */
+		// Check for input packet and process it.
 		ethernet_task();
 	}
+	*/
 }

@@ -103,11 +103,6 @@
 // From module: SAME70 XPLD LED support enabled
 #include <led.h>
 
-// From module: Stand-alone port(no OS) of the lwIP v141 stack on SAME70 hardware module.
-#include <arch/cc.h>
-#include <arch/perf.h>
-#include <same70_gmac.h>
-
 // From module: Standard serial I/O (stdio) - SAM implementation
 #include <stdio_serial.h>
 
