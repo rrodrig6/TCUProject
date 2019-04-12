@@ -99,7 +99,7 @@
 #define TIMERA0_PIN PIO_PD30_IDX	//Pin 28
 #define TIMERA1_PIN PIO_PD28_IDX	//Pin 27
 #define TIMERA2_PIN PIO_PD27_IDX	//Pin 26
-#define TIMERA3_PIN PIO_PA_27_IDX	//Pin 25
+#define TIMERA3_PIN PIO_PA27_IDX	//Pin 25
 #define TIMERA4_PIN PIO_PD12_IDX	//Pin 24
 #define TIMERA5_PIN PIO_PD11_IDX	//Pin 23
 #define TIMERA6_PIN PIO_PA5_IDX		//Pin 22
@@ -389,7 +389,7 @@ int main(void)
 	ioport_set_pin_mode(TIMERA_READY_PIN, (IOPORT_MODE_PULLUP | IOPORT_MODE_DEBOUNCE) );
 	ioport_set_pin_sense_mode(TIMERA_READY_PIN, (IOPORT_SENSE_RISING));
 	pio_handler_set(PIOC, ID_PIOC,
-	COUNT_READY_MASK, (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
+	TIMERA_READY_MASK, (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
 	NVIC_EnableIRQ((IRQn_Type) ID_PIOC);
 	pio_handler_set_priority(PIOC,
 	(IRQn_Type) ID_PIOC, IRQ_PRIOR_PIO);

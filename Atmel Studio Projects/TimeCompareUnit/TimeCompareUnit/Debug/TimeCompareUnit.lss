@@ -19,23 +19,23 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY
   7 .comment      00000059  00000000  00000000  000209e6  2**0
                   CONTENTS, READONLY
-  8 .debug_info   000190cf  00000000  00000000  00020a3f  2**0
+  8 .debug_info   000190ca  00000000  00000000  00020a3f  2**0
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_abbrev 00003027  00000000  00000000  00039b0e  2**0
+  9 .debug_abbrev 00003027  00000000  00000000  00039b09  2**0
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_loc    00005186  00000000  00000000  0003cb35  2**0
+ 10 .debug_loc    00005191  00000000  00000000  0003cb30  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_aranges 00000a28  00000000  00000000  00041cbb  2**0
+ 11 .debug_aranges 00000a28  00000000  00000000  00041cc1  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_ranges 00000a60  00000000  00000000  000426e3  2**0
+ 12 .debug_ranges 00000a60  00000000  00000000  000426e9  2**0
                   CONTENTS, READONLY, DEBUGGING
- 13 .debug_macro  000206e2  00000000  00000000  00043143  2**0
+ 13 .debug_macro  000206e2  00000000  00000000  00043149  2**0
                   CONTENTS, READONLY, DEBUGGING
- 14 .debug_line   0000c197  00000000  00000000  00063825  2**0
+ 14 .debug_line   0000c195  00000000  00000000  0006382b  2**0
                   CONTENTS, READONLY, DEBUGGING
- 15 .debug_str    0009954e  00000000  00000000  0006f9bc  2**0
+ 15 .debug_str    0009957c  00000000  00000000  0006f9c0  2**0
                   CONTENTS, READONLY, DEBUGGING
- 16 .debug_frame  0000293c  00000000  00000000  00108f0c  2**2
+ 16 .debug_frame  0000293c  00000000  00000000  00108f3c  2**2
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -2329,9 +2329,9 @@ static inline void usart_serial_getchar(usart_if p_usart, uint8_t *data)
   400d5c:	00400711 	.word	0x00400711
   400d60:	00400819 	.word	0x00400819
 
-00400d64 <readTimerByte>:
+00400d64 <readTimerByteA>:
 
-uint8_t readTimerByte(byteSelect byte, char ** p_binaryString)
+uint8_t readTimerByteA(byteSelect byte, char ** p_binaryString)
 {
   400d64:	e92d 41f0 	stmdb	sp!, {r4, r5, r6, r7, r8, lr}
   400d68:	b084      	sub	sp, #16
@@ -2346,269 +2346,268 @@ uint8_t readTimerByte(byteSelect byte, char ** p_binaryString)
 	
 	
 	switch(byte)
-  400d76:	3801      	subs	r0, #1
-  400d78:	2803      	cmp	r0, #3
-  400d7a:	f200 8120 	bhi.w	400fbe <readTimerByte+0x25a>
-  400d7e:	e8df f010 	tbh	[pc, r0, lsl #1]
-  400d82:	0004      	.short	0x0004
-  400d84:	00fc00eb 	.word	0x00fc00eb
-  400d88:	010d      	.short	0x010d
+  400d76:	2803      	cmp	r0, #3
+  400d78:	f200 8120 	bhi.w	400fbc <readTimerByteA+0x258>
+  400d7c:	e8df f010 	tbh	[pc, r0, lsl #1]
+  400d80:	00eb0004 	.word	0x00eb0004
+  400d84:	010d00fc 	.word	0x010d00fc
 		base->PIO_CODR = arch_ioport_pin_to_mask(pin);
-  400d8a:	2208      	movs	r2, #8
-  400d8c:	4b94      	ldr	r3, [pc, #592]	; (400fe0 <readTimerByte+0x27c>)
-  400d8e:	635a      	str	r2, [r3, #52]	; 0x34
+  400d88:	2208      	movs	r2, #8
+  400d8a:	4b95      	ldr	r3, [pc, #596]	; (400fe0 <readTimerByteA+0x27c>)
+  400d8c:	635a      	str	r2, [r3, #52]	; 0x34
 		base->PIO_SODR = arch_ioport_pin_to_mask(pin);
-  400d90:	f503 6380 	add.w	r3, r3, #1024	; 0x400
-  400d94:	f44f 1200 	mov.w	r2, #2097152	; 0x200000
-  400d98:	631a      	str	r2, [r3, #48]	; 0x30
-  400d9a:	f44f 0280 	mov.w	r2, #4194304	; 0x400000
-  400d9e:	631a      	str	r2, [r3, #48]	; 0x30
-  400da0:	f04f 7280 	mov.w	r2, #16777216	; 0x1000000
-  400da4:	f5a3 63c0 	sub.w	r3, r3, #1536	; 0x600
-  400da8:	631a      	str	r2, [r3, #48]	; 0x30
-		ioport_set_pin_level(BYTE3_SHIFT,HIGH);
-		ioport_set_pin_level(BYTE4_SHIFT,HIGH);
+  400d8e:	f503 6380 	add.w	r3, r3, #1024	; 0x400
+  400d92:	f44f 1200 	mov.w	r2, #2097152	; 0x200000
+  400d96:	631a      	str	r2, [r3, #48]	; 0x30
+  400d98:	f44f 0280 	mov.w	r2, #4194304	; 0x400000
+  400d9c:	631a      	str	r2, [r3, #48]	; 0x30
+  400d9e:	f04f 7280 	mov.w	r2, #16777216	; 0x1000000
+  400da2:	f5a3 63c0 	sub.w	r3, r3, #1536	; 0x600
+  400da6:	631a      	str	r2, [r3, #48]	; 0x30
+		ioport_set_pin_level(TIMERA_SEL2_PIN,HIGH);
+		ioport_set_pin_level(TIMERA_SEL3_PIN,HIGH);
 		break;
 	}
 	
 	waitCount(10000);
-  400daa:	f242 7010 	movw	r0, #10000	; 0x2710
-  400dae:	4b8d      	ldr	r3, [pc, #564]	; (400fe4 <readTimerByte+0x280>)
-  400db0:	4798      	blx	r3
+  400da8:	f242 7010 	movw	r0, #10000	; 0x2710
+  400dac:	4b8d      	ldr	r3, [pc, #564]	; (400fe4 <readTimerByteA+0x280>)
+  400dae:	4798      	blx	r3
 	return arch_ioport_pin_to_base(pin)->PIO_PDSR & arch_ioport_pin_to_mask(pin);
-  400db2:	4e8d      	ldr	r6, [pc, #564]	; (400fe8 <readTimerByte+0x284>)
-  400db4:	6bf3      	ldr	r3, [r6, #60]	; 0x3c
-	bit = ioport_get_pin_level(BIT0_PIN);
-  400db6:	f3c3 7380 	ubfx	r3, r3, #30, #1
-  400dba:	f88d 300e 	strb.w	r3, [sp, #14]
+  400db0:	4e8d      	ldr	r6, [pc, #564]	; (400fe8 <readTimerByteA+0x284>)
+  400db2:	6bf3      	ldr	r3, [r6, #60]	; 0x3c
+	bit = ioport_get_pin_level(TIMERA0_PIN);
+  400db4:	f3c3 7380 	ubfx	r3, r3, #30, #1
+  400db8:	f88d 300e 	strb.w	r3, [sp, #14]
 	readByte = readByte | bit;
-  400dbe:	f89d 200f 	ldrb.w	r2, [sp, #15]
-  400dc2:	f89d 300e 	ldrb.w	r3, [sp, #14]
-  400dc6:	4313      	orrs	r3, r2
-  400dc8:	f88d 300f 	strb.w	r3, [sp, #15]
+  400dbc:	f89d 200f 	ldrb.w	r2, [sp, #15]
+  400dc0:	f89d 300e 	ldrb.w	r3, [sp, #14]
+  400dc4:	4313      	orrs	r3, r2
+  400dc6:	f88d 300f 	strb.w	r3, [sp, #15]
 	sprintf(tempString, "%u", bit);
-  400dcc:	f89d 200e 	ldrb.w	r2, [sp, #14]
-  400dd0:	4d86      	ldr	r5, [pc, #536]	; (400fec <readTimerByte+0x288>)
-  400dd2:	4629      	mov	r1, r5
-  400dd4:	4668      	mov	r0, sp
-  400dd6:	4c86      	ldr	r4, [pc, #536]	; (400ff0 <readTimerByte+0x28c>)
-  400dd8:	47a0      	blx	r4
+  400dca:	f89d 200e 	ldrb.w	r2, [sp, #14]
+  400dce:	4d87      	ldr	r5, [pc, #540]	; (400fec <readTimerByteA+0x288>)
+  400dd0:	4629      	mov	r1, r5
+  400dd2:	4668      	mov	r0, sp
+  400dd4:	4c86      	ldr	r4, [pc, #536]	; (400ff0 <readTimerByteA+0x28c>)
+  400dd6:	47a0      	blx	r4
 	bitString[7]= tempString[0];
-  400dda:	f89d 3000 	ldrb.w	r3, [sp]
-  400dde:	f88d 300b 	strb.w	r3, [sp, #11]
-  400de2:	6bf3      	ldr	r3, [r6, #60]	; 0x3c
-	bit = ioport_get_pin_level(BIT1_PIN);
-  400de4:	f3c3 7300 	ubfx	r3, r3, #28, #1
-  400de8:	f88d 300e 	strb.w	r3, [sp, #14]
+  400dd8:	f89d 3000 	ldrb.w	r3, [sp]
+  400ddc:	f88d 300b 	strb.w	r3, [sp, #11]
+  400de0:	6bf3      	ldr	r3, [r6, #60]	; 0x3c
+	bit = ioport_get_pin_level(TIMERA1_PIN);
+  400de2:	f3c3 7300 	ubfx	r3, r3, #28, #1
+  400de6:	f88d 300e 	strb.w	r3, [sp, #14]
 	readByte = readByte | (bit<<1);
-  400dec:	f89d 200e 	ldrb.w	r2, [sp, #14]
-  400df0:	f89d 300f 	ldrb.w	r3, [sp, #15]
-  400df4:	ea43 0342 	orr.w	r3, r3, r2, lsl #1
-  400df8:	b2db      	uxtb	r3, r3
-  400dfa:	f88d 300f 	strb.w	r3, [sp, #15]
+  400dea:	f89d 200e 	ldrb.w	r2, [sp, #14]
+  400dee:	f89d 300f 	ldrb.w	r3, [sp, #15]
+  400df2:	ea43 0342 	orr.w	r3, r3, r2, lsl #1
+  400df6:	b2db      	uxtb	r3, r3
+  400df8:	f88d 300f 	strb.w	r3, [sp, #15]
 	sprintf(tempString, "%u", bit);
-  400dfe:	f89d 200e 	ldrb.w	r2, [sp, #14]
-  400e02:	4629      	mov	r1, r5
-  400e04:	4668      	mov	r0, sp
-  400e06:	47a0      	blx	r4
+  400dfc:	f89d 200e 	ldrb.w	r2, [sp, #14]
+  400e00:	4629      	mov	r1, r5
+  400e02:	4668      	mov	r0, sp
+  400e04:	47a0      	blx	r4
 	bitString[6]= tempString[0];
-  400e08:	f89d 3000 	ldrb.w	r3, [sp]
-  400e0c:	f88d 300a 	strb.w	r3, [sp, #10]
-  400e10:	6bf3      	ldr	r3, [r6, #60]	; 0x3c
-	bit = ioport_get_pin_level(BIT2_PIN);
-  400e12:	f3c3 63c0 	ubfx	r3, r3, #27, #1
-  400e16:	f88d 300e 	strb.w	r3, [sp, #14]
+  400e06:	f89d 3000 	ldrb.w	r3, [sp]
+  400e0a:	f88d 300a 	strb.w	r3, [sp, #10]
+  400e0e:	6bf3      	ldr	r3, [r6, #60]	; 0x3c
+	bit = ioport_get_pin_level(TIMERA2_PIN);
+  400e10:	f3c3 63c0 	ubfx	r3, r3, #27, #1
+  400e14:	f88d 300e 	strb.w	r3, [sp, #14]
 	readByte = readByte | (bit<<2);
-  400e1a:	f89d 200e 	ldrb.w	r2, [sp, #14]
-  400e1e:	f89d 300f 	ldrb.w	r3, [sp, #15]
-  400e22:	ea43 0382 	orr.w	r3, r3, r2, lsl #2
-  400e26:	b2db      	uxtb	r3, r3
-  400e28:	f88d 300f 	strb.w	r3, [sp, #15]
+  400e18:	f89d 200e 	ldrb.w	r2, [sp, #14]
+  400e1c:	f89d 300f 	ldrb.w	r3, [sp, #15]
+  400e20:	ea43 0382 	orr.w	r3, r3, r2, lsl #2
+  400e24:	b2db      	uxtb	r3, r3
+  400e26:	f88d 300f 	strb.w	r3, [sp, #15]
 	sprintf(tempString, "%u", bit);
-  400e2c:	f89d 200e 	ldrb.w	r2, [sp, #14]
-  400e30:	4629      	mov	r1, r5
-  400e32:	4668      	mov	r0, sp
-  400e34:	47a0      	blx	r4
+  400e2a:	f89d 200e 	ldrb.w	r2, [sp, #14]
+  400e2e:	4629      	mov	r1, r5
+  400e30:	4668      	mov	r0, sp
+  400e32:	47a0      	blx	r4
 	bitString[5]= tempString[0];
-  400e36:	f89d 3000 	ldrb.w	r3, [sp]
-  400e3a:	f88d 3009 	strb.w	r3, [sp, #9]
-  400e3e:	4f6d      	ldr	r7, [pc, #436]	; (400ff4 <readTimerByte+0x290>)
-  400e40:	6bfb      	ldr	r3, [r7, #60]	; 0x3c
-	bit = ioport_get_pin_level(BIT3_PIN);
-  400e42:	f3c3 63c0 	ubfx	r3, r3, #27, #1
-  400e46:	f88d 300e 	strb.w	r3, [sp, #14]
+  400e34:	f89d 3000 	ldrb.w	r3, [sp]
+  400e38:	f88d 3009 	strb.w	r3, [sp, #9]
+  400e3c:	4f6d      	ldr	r7, [pc, #436]	; (400ff4 <readTimerByteA+0x290>)
+  400e3e:	6bfb      	ldr	r3, [r7, #60]	; 0x3c
+	bit = ioport_get_pin_level(TIMERA3_PIN);
+  400e40:	f3c3 63c0 	ubfx	r3, r3, #27, #1
+  400e44:	f88d 300e 	strb.w	r3, [sp, #14]
 	readByte = readByte | (bit<<3);
-  400e4a:	f89d 200e 	ldrb.w	r2, [sp, #14]
-  400e4e:	f89d 300f 	ldrb.w	r3, [sp, #15]
-  400e52:	ea43 03c2 	orr.w	r3, r3, r2, lsl #3
-  400e56:	b2db      	uxtb	r3, r3
-  400e58:	f88d 300f 	strb.w	r3, [sp, #15]
+  400e48:	f89d 200e 	ldrb.w	r2, [sp, #14]
+  400e4c:	f89d 300f 	ldrb.w	r3, [sp, #15]
+  400e50:	ea43 03c2 	orr.w	r3, r3, r2, lsl #3
+  400e54:	b2db      	uxtb	r3, r3
+  400e56:	f88d 300f 	strb.w	r3, [sp, #15]
 	sprintf(tempString, "%u", bit);
-  400e5c:	f89d 200e 	ldrb.w	r2, [sp, #14]
-  400e60:	4629      	mov	r1, r5
-  400e62:	4668      	mov	r0, sp
-  400e64:	47a0      	blx	r4
+  400e5a:	f89d 200e 	ldrb.w	r2, [sp, #14]
+  400e5e:	4629      	mov	r1, r5
+  400e60:	4668      	mov	r0, sp
+  400e62:	47a0      	blx	r4
 	bitString[4]= tempString[0];
-  400e66:	f89d 3000 	ldrb.w	r3, [sp]
-  400e6a:	f88d 3008 	strb.w	r3, [sp, #8]
-  400e6e:	6bf3      	ldr	r3, [r6, #60]	; 0x3c
-	bit = ioport_get_pin_level(BIT4_PIN);
-  400e70:	f3c3 3300 	ubfx	r3, r3, #12, #1
-  400e74:	f88d 300e 	strb.w	r3, [sp, #14]
+  400e64:	f89d 3000 	ldrb.w	r3, [sp]
+  400e68:	f88d 3008 	strb.w	r3, [sp, #8]
+  400e6c:	6bf3      	ldr	r3, [r6, #60]	; 0x3c
+	bit = ioport_get_pin_level(TIMERA4_PIN);
+  400e6e:	f3c3 3300 	ubfx	r3, r3, #12, #1
+  400e72:	f88d 300e 	strb.w	r3, [sp, #14]
 	readByte = readByte | (bit<<4);
-  400e78:	f89d 200e 	ldrb.w	r2, [sp, #14]
-  400e7c:	f89d 300f 	ldrb.w	r3, [sp, #15]
-  400e80:	ea43 1302 	orr.w	r3, r3, r2, lsl #4
-  400e84:	b2db      	uxtb	r3, r3
-  400e86:	f88d 300f 	strb.w	r3, [sp, #15]
+  400e76:	f89d 200e 	ldrb.w	r2, [sp, #14]
+  400e7a:	f89d 300f 	ldrb.w	r3, [sp, #15]
+  400e7e:	ea43 1302 	orr.w	r3, r3, r2, lsl #4
+  400e82:	b2db      	uxtb	r3, r3
+  400e84:	f88d 300f 	strb.w	r3, [sp, #15]
 	sprintf(tempString, "%u", bit);
-  400e8a:	f89d 200e 	ldrb.w	r2, [sp, #14]
-  400e8e:	4629      	mov	r1, r5
-  400e90:	4668      	mov	r0, sp
-  400e92:	47a0      	blx	r4
+  400e88:	f89d 200e 	ldrb.w	r2, [sp, #14]
+  400e8c:	4629      	mov	r1, r5
+  400e8e:	4668      	mov	r0, sp
+  400e90:	47a0      	blx	r4
 	bitString[3]= tempString[0];
-  400e94:	f89d 3000 	ldrb.w	r3, [sp]
-  400e98:	f88d 3007 	strb.w	r3, [sp, #7]
-  400e9c:	6bf3      	ldr	r3, [r6, #60]	; 0x3c
-	bit = ioport_get_pin_level(BIT5_PIN);
-  400e9e:	f3c3 23c0 	ubfx	r3, r3, #11, #1
-  400ea2:	f88d 300e 	strb.w	r3, [sp, #14]
+  400e92:	f89d 3000 	ldrb.w	r3, [sp]
+  400e96:	f88d 3007 	strb.w	r3, [sp, #7]
+  400e9a:	6bf3      	ldr	r3, [r6, #60]	; 0x3c
+	bit = ioport_get_pin_level(TIMERA5_PIN);
+  400e9c:	f3c3 23c0 	ubfx	r3, r3, #11, #1
+  400ea0:	f88d 300e 	strb.w	r3, [sp, #14]
 	readByte = readByte | (bit<<5);
-  400ea6:	f89d 200e 	ldrb.w	r2, [sp, #14]
-  400eaa:	f89d 300f 	ldrb.w	r3, [sp, #15]
-  400eae:	ea43 1342 	orr.w	r3, r3, r2, lsl #5
-  400eb2:	b2db      	uxtb	r3, r3
-  400eb4:	f88d 300f 	strb.w	r3, [sp, #15]
+  400ea4:	f89d 200e 	ldrb.w	r2, [sp, #14]
+  400ea8:	f89d 300f 	ldrb.w	r3, [sp, #15]
+  400eac:	ea43 1342 	orr.w	r3, r3, r2, lsl #5
+  400eb0:	b2db      	uxtb	r3, r3
+  400eb2:	f88d 300f 	strb.w	r3, [sp, #15]
 	sprintf(tempString, "%u", bit);
-  400eb8:	f89d 200e 	ldrb.w	r2, [sp, #14]
-  400ebc:	4629      	mov	r1, r5
-  400ebe:	4668      	mov	r0, sp
-  400ec0:	47a0      	blx	r4
+  400eb6:	f89d 200e 	ldrb.w	r2, [sp, #14]
+  400eba:	4629      	mov	r1, r5
+  400ebc:	4668      	mov	r0, sp
+  400ebe:	47a0      	blx	r4
 	bitString[2]= tempString[0];
-  400ec2:	f89d 3000 	ldrb.w	r3, [sp]
-  400ec6:	f88d 3006 	strb.w	r3, [sp, #6]
-  400eca:	6bfb      	ldr	r3, [r7, #60]	; 0x3c
-	bit = ioport_get_pin_level(BIT6_PIN);
-  400ecc:	f3c3 1340 	ubfx	r3, r3, #5, #1
-  400ed0:	f88d 300e 	strb.w	r3, [sp, #14]
+  400ec0:	f89d 3000 	ldrb.w	r3, [sp]
+  400ec4:	f88d 3006 	strb.w	r3, [sp, #6]
+  400ec8:	6bfb      	ldr	r3, [r7, #60]	; 0x3c
+	bit = ioport_get_pin_level(TIMERA6_PIN);
+  400eca:	f3c3 1340 	ubfx	r3, r3, #5, #1
+  400ece:	f88d 300e 	strb.w	r3, [sp, #14]
 	readByte = readByte | (bit<<6);
-  400ed4:	f89d 200e 	ldrb.w	r2, [sp, #14]
-  400ed8:	f89d 300f 	ldrb.w	r3, [sp, #15]
-  400edc:	ea43 1382 	orr.w	r3, r3, r2, lsl #6
-  400ee0:	b2db      	uxtb	r3, r3
-  400ee2:	f88d 300f 	strb.w	r3, [sp, #15]
+  400ed2:	f89d 200e 	ldrb.w	r2, [sp, #14]
+  400ed6:	f89d 300f 	ldrb.w	r3, [sp, #15]
+  400eda:	ea43 1382 	orr.w	r3, r3, r2, lsl #6
+  400ede:	b2db      	uxtb	r3, r3
+  400ee0:	f88d 300f 	strb.w	r3, [sp, #15]
 	sprintf(tempString, "%u", bit);
-  400ee6:	f89d 200e 	ldrb.w	r2, [sp, #14]
-  400eea:	4629      	mov	r1, r5
-  400eec:	4668      	mov	r0, sp
-  400eee:	47a0      	blx	r4
+  400ee4:	f89d 200e 	ldrb.w	r2, [sp, #14]
+  400ee8:	4629      	mov	r1, r5
+  400eea:	4668      	mov	r0, sp
+  400eec:	47a0      	blx	r4
 	bitString[1]= tempString[0];
-  400ef0:	f89d 3000 	ldrb.w	r3, [sp]
-  400ef4:	f88d 3005 	strb.w	r3, [sp, #5]
-  400ef8:	6bfb      	ldr	r3, [r7, #60]	; 0x3c
-	bit = ioport_get_pin_level(BIT7_PIN);
-  400efa:	f3c3 2340 	ubfx	r3, r3, #9, #1
-  400efe:	f88d 300e 	strb.w	r3, [sp, #14]
+  400eee:	f89d 3000 	ldrb.w	r3, [sp]
+  400ef2:	f88d 3005 	strb.w	r3, [sp, #5]
+  400ef6:	6bfb      	ldr	r3, [r7, #60]	; 0x3c
+	bit = ioport_get_pin_level(TIMERA7_PIN);
+  400ef8:	f3c3 2340 	ubfx	r3, r3, #9, #1
+  400efc:	f88d 300e 	strb.w	r3, [sp, #14]
 	readByte = readByte | (bit<<7);
-  400f02:	f89d 200e 	ldrb.w	r2, [sp, #14]
-  400f06:	f89d 300f 	ldrb.w	r3, [sp, #15]
-  400f0a:	ea43 13c2 	orr.w	r3, r3, r2, lsl #7
-  400f0e:	b2db      	uxtb	r3, r3
-  400f10:	f88d 300f 	strb.w	r3, [sp, #15]
+  400f00:	f89d 200e 	ldrb.w	r2, [sp, #14]
+  400f04:	f89d 300f 	ldrb.w	r3, [sp, #15]
+  400f08:	ea43 13c2 	orr.w	r3, r3, r2, lsl #7
+  400f0c:	b2db      	uxtb	r3, r3
+  400f0e:	f88d 300f 	strb.w	r3, [sp, #15]
 	sprintf(tempString, "%u", bit);
-  400f14:	f89d 200e 	ldrb.w	r2, [sp, #14]
-  400f18:	4629      	mov	r1, r5
-  400f1a:	4668      	mov	r0, sp
-  400f1c:	47a0      	blx	r4
+  400f12:	f89d 200e 	ldrb.w	r2, [sp, #14]
+  400f16:	4629      	mov	r1, r5
+  400f18:	4668      	mov	r0, sp
+  400f1a:	47a0      	blx	r4
 	bitString[0]= tempString[0];
-  400f1e:	f89d 3000 	ldrb.w	r3, [sp]
-  400f22:	f88d 3004 	strb.w	r3, [sp, #4]
+  400f1c:	f89d 3000 	ldrb.w	r3, [sp]
+  400f20:	f88d 3004 	strb.w	r3, [sp, #4]
 	
 	bitString[8]='\0';
-  400f26:	2300      	movs	r3, #0
-  400f28:	f88d 300c 	strb.w	r3, [sp, #12]
+  400f24:	2300      	movs	r3, #0
+  400f26:	f88d 300c 	strb.w	r3, [sp, #12]
 		base->PIO_SODR = arch_ioport_pin_to_mask(pin);
-  400f2c:	2208      	movs	r2, #8
-  400f2e:	4b2c      	ldr	r3, [pc, #176]	; (400fe0 <readTimerByte+0x27c>)
-  400f30:	631a      	str	r2, [r3, #48]	; 0x30
-  400f32:	f44f 1300 	mov.w	r3, #2097152	; 0x200000
-  400f36:	6333      	str	r3, [r6, #48]	; 0x30
-  400f38:	f44f 0380 	mov.w	r3, #4194304	; 0x400000
-  400f3c:	6333      	str	r3, [r6, #48]	; 0x30
-  400f3e:	f04f 7380 	mov.w	r3, #16777216	; 0x1000000
-  400f42:	633b      	str	r3, [r7, #48]	; 0x30
-	ioport_set_pin_level(BYTE1_SHIFT,HIGH);
-	ioport_set_pin_level(BYTE2_SHIFT,HIGH);
-	ioport_set_pin_level(BYTE3_SHIFT,HIGH);
-	ioport_set_pin_level(BYTE4_SHIFT,HIGH);
+  400f2a:	2208      	movs	r2, #8
+  400f2c:	4b2c      	ldr	r3, [pc, #176]	; (400fe0 <readTimerByteA+0x27c>)
+  400f2e:	631a      	str	r2, [r3, #48]	; 0x30
+  400f30:	f44f 1300 	mov.w	r3, #2097152	; 0x200000
+  400f34:	6333      	str	r3, [r6, #48]	; 0x30
+  400f36:	f44f 0380 	mov.w	r3, #4194304	; 0x400000
+  400f3a:	6333      	str	r3, [r6, #48]	; 0x30
+  400f3c:	f04f 7380 	mov.w	r3, #16777216	; 0x1000000
+  400f40:	633b      	str	r3, [r7, #48]	; 0x30
+	ioport_set_pin_level(TIMERA_SEL0_PIN,HIGH);
+	ioport_set_pin_level(TIMERA_SEL1_PIN,HIGH);
+	ioport_set_pin_level(TIMERA_SEL2_PIN,HIGH);
+	ioport_set_pin_level(TIMERA_SEL3_PIN,HIGH);
 	
 	strncpy(p_binaryString, bitString, 9);
-  400f44:	2209      	movs	r2, #9
-  400f46:	a901      	add	r1, sp, #4
-  400f48:	4640      	mov	r0, r8
-  400f4a:	4b2b      	ldr	r3, [pc, #172]	; (400ff8 <readTimerByte+0x294>)
-  400f4c:	4798      	blx	r3
+  400f42:	2209      	movs	r2, #9
+  400f44:	a901      	add	r1, sp, #4
+  400f46:	4640      	mov	r0, r8
+  400f48:	4b2b      	ldr	r3, [pc, #172]	; (400ff8 <readTimerByteA+0x294>)
+  400f4a:	4798      	blx	r3
 	
 	
 	return readByte;
-  400f4e:	f89d 000f 	ldrb.w	r0, [sp, #15]
+  400f4c:	f89d 000f 	ldrb.w	r0, [sp, #15]
 }
-  400f52:	b004      	add	sp, #16
-  400f54:	e8bd 81f0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, pc}
-  400f58:	2208      	movs	r2, #8
-  400f5a:	4b21      	ldr	r3, [pc, #132]	; (400fe0 <readTimerByte+0x27c>)
-  400f5c:	631a      	str	r2, [r3, #48]	; 0x30
+  400f50:	b004      	add	sp, #16
+  400f52:	e8bd 81f0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, pc}
+  400f56:	2208      	movs	r2, #8
+  400f58:	4b21      	ldr	r3, [pc, #132]	; (400fe0 <readTimerByteA+0x27c>)
+  400f5a:	631a      	str	r2, [r3, #48]	; 0x30
 		base->PIO_CODR = arch_ioport_pin_to_mask(pin);
-  400f5e:	f503 6380 	add.w	r3, r3, #1024	; 0x400
-  400f62:	f44f 1200 	mov.w	r2, #2097152	; 0x200000
-  400f66:	635a      	str	r2, [r3, #52]	; 0x34
+  400f5c:	f503 6380 	add.w	r3, r3, #1024	; 0x400
+  400f60:	f44f 1200 	mov.w	r2, #2097152	; 0x200000
+  400f64:	635a      	str	r2, [r3, #52]	; 0x34
 		base->PIO_SODR = arch_ioport_pin_to_mask(pin);
-  400f68:	f44f 0280 	mov.w	r2, #4194304	; 0x400000
-  400f6c:	631a      	str	r2, [r3, #48]	; 0x30
-  400f6e:	f04f 7280 	mov.w	r2, #16777216	; 0x1000000
-  400f72:	f5a3 63c0 	sub.w	r3, r3, #1536	; 0x600
-  400f76:	631a      	str	r2, [r3, #48]	; 0x30
-  400f78:	e717      	b.n	400daa <readTimerByte+0x46>
-  400f7a:	2208      	movs	r2, #8
-  400f7c:	4b18      	ldr	r3, [pc, #96]	; (400fe0 <readTimerByte+0x27c>)
-  400f7e:	631a      	str	r2, [r3, #48]	; 0x30
-  400f80:	f503 6380 	add.w	r3, r3, #1024	; 0x400
-  400f84:	f44f 1200 	mov.w	r2, #2097152	; 0x200000
-  400f88:	631a      	str	r2, [r3, #48]	; 0x30
+  400f66:	f44f 0280 	mov.w	r2, #4194304	; 0x400000
+  400f6a:	631a      	str	r2, [r3, #48]	; 0x30
+  400f6c:	f04f 7280 	mov.w	r2, #16777216	; 0x1000000
+  400f70:	f5a3 63c0 	sub.w	r3, r3, #1536	; 0x600
+  400f74:	631a      	str	r2, [r3, #48]	; 0x30
+  400f76:	e717      	b.n	400da8 <readTimerByteA+0x44>
+  400f78:	2208      	movs	r2, #8
+  400f7a:	4b19      	ldr	r3, [pc, #100]	; (400fe0 <readTimerByteA+0x27c>)
+  400f7c:	631a      	str	r2, [r3, #48]	; 0x30
+  400f7e:	f503 6380 	add.w	r3, r3, #1024	; 0x400
+  400f82:	f44f 1200 	mov.w	r2, #2097152	; 0x200000
+  400f86:	631a      	str	r2, [r3, #48]	; 0x30
 		base->PIO_CODR = arch_ioport_pin_to_mask(pin);
-  400f8a:	f44f 0280 	mov.w	r2, #4194304	; 0x400000
-  400f8e:	635a      	str	r2, [r3, #52]	; 0x34
+  400f88:	f44f 0280 	mov.w	r2, #4194304	; 0x400000
+  400f8c:	635a      	str	r2, [r3, #52]	; 0x34
 		base->PIO_SODR = arch_ioport_pin_to_mask(pin);
-  400f90:	f04f 7280 	mov.w	r2, #16777216	; 0x1000000
-  400f94:	f5a3 63c0 	sub.w	r3, r3, #1536	; 0x600
-  400f98:	631a      	str	r2, [r3, #48]	; 0x30
-  400f9a:	e706      	b.n	400daa <readTimerByte+0x46>
-  400f9c:	2208      	movs	r2, #8
-  400f9e:	4b10      	ldr	r3, [pc, #64]	; (400fe0 <readTimerByte+0x27c>)
-  400fa0:	631a      	str	r2, [r3, #48]	; 0x30
-  400fa2:	f503 6380 	add.w	r3, r3, #1024	; 0x400
-  400fa6:	f44f 1200 	mov.w	r2, #2097152	; 0x200000
-  400faa:	631a      	str	r2, [r3, #48]	; 0x30
-  400fac:	f44f 0280 	mov.w	r2, #4194304	; 0x400000
-  400fb0:	631a      	str	r2, [r3, #48]	; 0x30
+  400f8e:	f04f 7280 	mov.w	r2, #16777216	; 0x1000000
+  400f92:	f5a3 63c0 	sub.w	r3, r3, #1536	; 0x600
+  400f96:	631a      	str	r2, [r3, #48]	; 0x30
+  400f98:	e706      	b.n	400da8 <readTimerByteA+0x44>
+  400f9a:	2208      	movs	r2, #8
+  400f9c:	4b10      	ldr	r3, [pc, #64]	; (400fe0 <readTimerByteA+0x27c>)
+  400f9e:	631a      	str	r2, [r3, #48]	; 0x30
+  400fa0:	f503 6380 	add.w	r3, r3, #1024	; 0x400
+  400fa4:	f44f 1200 	mov.w	r2, #2097152	; 0x200000
+  400fa8:	631a      	str	r2, [r3, #48]	; 0x30
+  400faa:	f44f 0280 	mov.w	r2, #4194304	; 0x400000
+  400fae:	631a      	str	r2, [r3, #48]	; 0x30
 		base->PIO_CODR = arch_ioport_pin_to_mask(pin);
-  400fb2:	f04f 7280 	mov.w	r2, #16777216	; 0x1000000
-  400fb6:	f5a3 63c0 	sub.w	r3, r3, #1536	; 0x600
-  400fba:	635a      	str	r2, [r3, #52]	; 0x34
-  400fbc:	e6f5      	b.n	400daa <readTimerByte+0x46>
+  400fb0:	f04f 7280 	mov.w	r2, #16777216	; 0x1000000
+  400fb4:	f5a3 63c0 	sub.w	r3, r3, #1536	; 0x600
+  400fb8:	635a      	str	r2, [r3, #52]	; 0x34
+  400fba:	e6f5      	b.n	400da8 <readTimerByteA+0x44>
 		base->PIO_SODR = arch_ioport_pin_to_mask(pin);
-  400fbe:	2208      	movs	r2, #8
-  400fc0:	4b07      	ldr	r3, [pc, #28]	; (400fe0 <readTimerByte+0x27c>)
-  400fc2:	631a      	str	r2, [r3, #48]	; 0x30
-  400fc4:	f503 6380 	add.w	r3, r3, #1024	; 0x400
-  400fc8:	f44f 1200 	mov.w	r2, #2097152	; 0x200000
-  400fcc:	631a      	str	r2, [r3, #48]	; 0x30
-  400fce:	f44f 0280 	mov.w	r2, #4194304	; 0x400000
-  400fd2:	631a      	str	r2, [r3, #48]	; 0x30
-  400fd4:	f04f 7280 	mov.w	r2, #16777216	; 0x1000000
-  400fd8:	f5a3 63c0 	sub.w	r3, r3, #1536	; 0x600
-  400fdc:	631a      	str	r2, [r3, #48]	; 0x30
-  400fde:	e6e4      	b.n	400daa <readTimerByte+0x46>
+  400fbc:	2208      	movs	r2, #8
+  400fbe:	4b08      	ldr	r3, [pc, #32]	; (400fe0 <readTimerByteA+0x27c>)
+  400fc0:	631a      	str	r2, [r3, #48]	; 0x30
+  400fc2:	f503 6380 	add.w	r3, r3, #1024	; 0x400
+  400fc6:	f44f 1200 	mov.w	r2, #2097152	; 0x200000
+  400fca:	631a      	str	r2, [r3, #48]	; 0x30
+  400fcc:	f44f 0280 	mov.w	r2, #4194304	; 0x400000
+  400fd0:	631a      	str	r2, [r3, #48]	; 0x30
+  400fd2:	f04f 7280 	mov.w	r2, #16777216	; 0x1000000
+  400fd6:	f5a3 63c0 	sub.w	r3, r3, #1536	; 0x600
+  400fda:	631a      	str	r2, [r3, #48]	; 0x30
+  400fdc:	e6e4      	b.n	400da8 <readTimerByteA+0x44>
+  400fde:	bf00      	nop
   400fe0:	400e1000 	.word	0x400e1000
   400fe4:	00400b9d 	.word	0x00400b9d
   400fe8:	400e1400 	.word	0x400e1400
@@ -2621,7 +2620,7 @@ uint8_t readTimerByte(byteSelect byte, char ** p_binaryString)
 
 static void CountReady_Handler(uint32_t id, uint32_t mask)
 {
-	if (ID_PIOC == id && COUNT_READY_MASK == mask) {
+	if (ID_PIOC == id && TIMERA_READY_MASK == mask) {
   400ffc:	280c      	cmp	r0, #12
   400ffe:	d157      	bne.n	4010b0 <CountReady_Handler+0xb4>
   401000:	f5b1 2f00 	cmp.w	r1, #524288	; 0x80000
@@ -2633,31 +2632,31 @@ static void CountReady_Handler(uint32_t id, uint32_t mask)
 		uint32_t readCount = 0;
 		char * p_bitString;
 		char bitString[9] = "";
-  40100c:	2300      	movs	r3, #0
-  40100e:	9301      	str	r3, [sp, #4]
-  401010:	9302      	str	r3, [sp, #8]
-  401012:	f88d 300c 	strb.w	r3, [sp, #12]
-  401016:	4c27      	ldr	r4, [pc, #156]	; (4010b4 <CountReady_Handler+0xb8>)
-  401018:	f04f 7580 	mov.w	r5, #16777216	; 0x1000000
-  40101c:	6325      	str	r5, [r4, #48]	; 0x30
+  40100c:	2400      	movs	r4, #0
+  40100e:	9401      	str	r4, [sp, #4]
+  401010:	9402      	str	r4, [sp, #8]
+  401012:	f88d 400c 	strb.w	r4, [sp, #12]
+  401016:	4d27      	ldr	r5, [pc, #156]	; (4010b4 <CountReady_Handler+0xb8>)
+  401018:	f04f 7780 	mov.w	r7, #16777216	; 0x1000000
+  40101c:	632f      	str	r7, [r5, #48]	; 0x30
 		p_bitString = &bitString;
 		
 		// Register counter outputs
-		ioport_set_pin_level(CLK_SHIFT, HIGH);
+		ioport_set_pin_level(TIMERA_REG_CLK_PIN, HIGH);
 		waitCount(10000);
   40101e:	f242 7010 	movw	r0, #10000	; 0x2710
   401022:	4e25      	ldr	r6, [pc, #148]	; (4010b8 <CountReady_Handler+0xbc>)
   401024:	47b0      	blx	r6
 		base->PIO_CODR = arch_ioport_pin_to_mask(pin);
-  401026:	6365      	str	r5, [r4, #52]	; 0x34
-		ioport_set_pin_level(CLK_SHIFT, LOW);
+  401026:	636f      	str	r7, [r5, #52]	; 0x34
+		ioport_set_pin_level(TIMERA_REG_CLK_PIN, LOW);
 		waitCount(10000);
   401028:	f242 7010 	movw	r0, #10000	; 0x2710
   40102c:	47b0      	blx	r6
 		
-		readByte = readTimerByte(Byte1, p_bitString);
+		readByte = readTimerByteA(Byte0, p_bitString);
   40102e:	a901      	add	r1, sp, #4
-  401030:	2001      	movs	r0, #1
+  401030:	4620      	mov	r0, r4
   401032:	4f22      	ldr	r7, [pc, #136]	; (4010bc <CountReady_Handler+0xc0>)
   401034:	47b8      	blx	r7
   401036:	4680      	mov	r8, r0
@@ -2672,9 +2671,9 @@ static void CountReady_Handler(uint32_t id, uint32_t mask)
   401042:	f242 7010 	movw	r0, #10000	; 0x2710
   401046:	47b0      	blx	r6
 		
-		readByte = readTimerByte(Byte2, p_bitString);
+		readByte = readTimerByteA(Byte1, p_bitString);
   401048:	a901      	add	r1, sp, #4
-  40104a:	2002      	movs	r0, #2
+  40104a:	2001      	movs	r0, #1
   40104c:	47b8      	blx	r7
   40104e:	4681      	mov	r9, r0
 		readCount += ((uint32_t) readByte) << 8;
@@ -2687,9 +2686,9 @@ static void CountReady_Handler(uint32_t id, uint32_t mask)
   401058:	f242 7010 	movw	r0, #10000	; 0x2710
   40105c:	47b0      	blx	r6
 		
-		readByte = readTimerByte(Byte3, p_bitString);
+		readByte = readTimerByteA(Byte2, p_bitString);
   40105e:	a901      	add	r1, sp, #4
-  401060:	2003      	movs	r0, #3
+  401060:	2002      	movs	r0, #2
   401062:	47b8      	blx	r7
   401064:	4602      	mov	r2, r0
 		readCount += ((uint32_t) readByte) << 16;
@@ -2704,9 +2703,9 @@ static void CountReady_Handler(uint32_t id, uint32_t mask)
   401074:	f242 7010 	movw	r0, #10000	; 0x2710
   401078:	47b0      	blx	r6
 		
-		readByte = readTimerByte(Byte4, p_bitString);
+		readByte = readTimerByteA(Byte3, p_bitString);
   40107a:	a901      	add	r1, sp, #4
-  40107c:	2004      	movs	r0, #4
+  40107c:	2003      	movs	r0, #3
   40107e:	47b8      	blx	r7
   401080:	4602      	mov	r2, r0
 		readCount += ((uint32_t) readByte) << 24;
@@ -2720,13 +2719,13 @@ static void CountReady_Handler(uint32_t id, uint32_t mask)
   401092:	f8c7 8034 	str.w	r8, [r7, #52]	; 0x34
 		
 		// Reset HW counter
-		ioport_set_pin_level(COUNT_CLEAR_PIN, LOW);
+		ioport_set_pin_level(TIMERA_CLR_PIN, LOW);
 		waitCount(10000);
   401096:	f242 7010 	movw	r0, #10000	; 0x2710
   40109a:	47b0      	blx	r6
 		base->PIO_SODR = arch_ioport_pin_to_mask(pin);
   40109c:	f8c7 8030 	str.w	r8, [r7, #48]	; 0x30
-		ioport_set_pin_level(COUNT_CLEAR_PIN, HIGH);
+		ioport_set_pin_level(TIMERA_CLR_PIN, HIGH);
 		
 		printf("Count: %u\r\n", readCount);
   4010a0:	4621      	mov	r1, r4
@@ -2875,8 +2874,8 @@ static inline void stdio_serial_init(volatile void *usart, const usart_serial_op
 	bool countResetPinValue = true;
 	
 	// Set counter Y read pins
-	ioport_set_pin_dir(BIT0_PIN, IOPORT_DIR_INPUT);
-	ioport_set_pin_mode(BIT0_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(TIMERA0_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(TIMERA0_PIN, IOPORT_MODE_PULLDOWN);
   401178:	2110      	movs	r1, #16
   40117a:	207e      	movs	r0, #126	; 0x7e
   40117c:	4e55      	ldr	r6, [pc, #340]	; (4012d4 <main+0x1e4>)
@@ -2886,8 +2885,8 @@ static inline void stdio_serial_init(volatile void *usart, const usart_serial_op
   401184:	6163      	str	r3, [r4, #20]
 	base->PIO_OWER = arch_ioport_pin_to_mask(pin);
   401186:	f8c4 30a0 	str.w	r3, [r4, #160]	; 0xa0
-	ioport_set_pin_dir(BIT1_PIN, IOPORT_DIR_INPUT);
-	ioport_set_pin_mode(BIT1_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(TIMERA1_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(TIMERA1_PIN, IOPORT_MODE_PULLDOWN);
   40118a:	2110      	movs	r1, #16
   40118c:	207c      	movs	r0, #124	; 0x7c
   40118e:	47b0      	blx	r6
@@ -2896,8 +2895,8 @@ static inline void stdio_serial_init(volatile void *usart, const usart_serial_op
   401194:	f8c4 8014 	str.w	r8, [r4, #20]
 	base->PIO_OWER = arch_ioport_pin_to_mask(pin);
   401198:	f8c4 80a0 	str.w	r8, [r4, #160]	; 0xa0
-	ioport_set_pin_dir(BIT2_PIN, IOPORT_DIR_INPUT);
-	ioport_set_pin_mode(BIT2_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(TIMERA2_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(TIMERA2_PIN, IOPORT_MODE_PULLDOWN);
   40119c:	2110      	movs	r1, #16
   40119e:	207b      	movs	r0, #123	; 0x7b
   4011a0:	47b0      	blx	r6
@@ -2906,8 +2905,8 @@ static inline void stdio_serial_init(volatile void *usart, const usart_serial_op
   4011a4:	f8c5 8014 	str.w	r8, [r5, #20]
 	base->PIO_OWER = arch_ioport_pin_to_mask(pin);
   4011a8:	f8c5 80a0 	str.w	r8, [r5, #160]	; 0xa0
-	ioport_set_pin_dir(BIT3_PIN, IOPORT_DIR_INPUT);
-	ioport_set_pin_mode(BIT3_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(TIMERA3_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(TIMERA3_PIN, IOPORT_MODE_PULLDOWN);
   4011ac:	2110      	movs	r1, #16
   4011ae:	201b      	movs	r0, #27
   4011b0:	47b0      	blx	r6
@@ -2916,8 +2915,8 @@ static inline void stdio_serial_init(volatile void *usart, const usart_serial_op
   4011b6:	f8c4 8014 	str.w	r8, [r4, #20]
 	base->PIO_OWER = arch_ioport_pin_to_mask(pin);
   4011ba:	f8c4 80a0 	str.w	r8, [r4, #160]	; 0xa0
-	ioport_set_pin_dir(BIT4_PIN, IOPORT_DIR_INPUT);
-	ioport_set_pin_mode(BIT4_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(TIMERA4_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(TIMERA4_PIN, IOPORT_MODE_PULLDOWN);
   4011be:	2110      	movs	r1, #16
   4011c0:	206c      	movs	r0, #108	; 0x6c
   4011c2:	47b0      	blx	r6
@@ -2925,8 +2924,8 @@ static inline void stdio_serial_init(volatile void *usart, const usart_serial_op
   4011c4:	f8c4 a014 	str.w	sl, [r4, #20]
 	base->PIO_OWER = arch_ioport_pin_to_mask(pin);
   4011c8:	f8c4 a0a0 	str.w	sl, [r4, #160]	; 0xa0
-	ioport_set_pin_dir(BIT5_PIN, IOPORT_DIR_INPUT);
-	ioport_set_pin_mode(BIT5_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(TIMERA5_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(TIMERA5_PIN, IOPORT_MODE_PULLDOWN);
   4011cc:	2110      	movs	r1, #16
   4011ce:	206b      	movs	r0, #107	; 0x6b
   4011d0:	47b0      	blx	r6
@@ -2935,8 +2934,8 @@ static inline void stdio_serial_init(volatile void *usart, const usart_serial_op
   4011d4:	616b      	str	r3, [r5, #20]
 	base->PIO_OWER = arch_ioport_pin_to_mask(pin);
   4011d6:	f8c5 30a0 	str.w	r3, [r5, #160]	; 0xa0
-	ioport_set_pin_dir(BIT6_PIN, IOPORT_DIR_INPUT);
-	ioport_set_pin_mode(BIT6_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(TIMERA6_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(TIMERA6_PIN, IOPORT_MODE_PULLDOWN);
   4011da:	2110      	movs	r1, #16
   4011dc:	2005      	movs	r0, #5
   4011de:	47b0      	blx	r6
@@ -2945,8 +2944,8 @@ static inline void stdio_serial_init(volatile void *usart, const usart_serial_op
   4011e4:	616b      	str	r3, [r5, #20]
 	base->PIO_OWER = arch_ioport_pin_to_mask(pin);
   4011e6:	f8c5 30a0 	str.w	r3, [r5, #160]	; 0xa0
-	ioport_set_pin_dir(BIT7_PIN, IOPORT_DIR_INPUT);
-	ioport_set_pin_mode(BIT7_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(TIMERA7_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(TIMERA7_PIN, IOPORT_MODE_PULLDOWN);
   4011ea:	2110      	movs	r1, #16
   4011ec:	2009      	movs	r0, #9
   4011ee:	47b0      	blx	r6
@@ -2980,12 +2979,12 @@ static inline void stdio_serial_init(volatile void *usart, const usart_serial_op
   401222:	612c      	str	r4, [r5, #16]
 	base->PIO_OWER = arch_ioport_pin_to_mask(pin);
   401224:	f8c5 40a0 	str.w	r4, [r5, #160]	; 0xa0
-	ioport_set_pin_dir(BYTE4_SHIFT, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(TIMERA_SEL3_PIN, IOPORT_DIR_OUTPUT);
 	
-	ioport_set_pin_dir(CLK_SHIFT, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(TIMERA_REG_CLK_PIN, IOPORT_DIR_OUTPUT);
 	
-	ioport_set_pin_dir(COUNT_CLEAR_PIN, IOPORT_DIR_OUTPUT);
-	ioport_set_pin_mode(COUNT_CLEAR_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(TIMERA_CLR_PIN, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_mode(TIMERA_CLR_PIN, IOPORT_MODE_PULLDOWN);
   401228:	2110      	movs	r1, #16
   40122a:	200d      	movs	r0, #13
   40122c:	47b0      	blx	r6
@@ -2998,11 +2997,11 @@ static inline void stdio_serial_init(volatile void *usart, const usart_serial_op
 	base->PIO_OWER = arch_ioport_pin_to_mask(pin);
   401238:	f8c4 50a0 	str.w	r5, [r4, #160]	; 0xa0
 	
-	ioport_set_pin_level(COUNT_CLEAR_PIN, countResetPinValue);
+	ioport_set_pin_level(TIMERA_CLR_PIN, countResetPinValue);
 	
 	//Configure CountRead Pin and Interrupt
-	ioport_set_pin_dir(COUNT_READY_PIN, IOPORT_DIR_INPUT);
-	ioport_set_pin_mode(COUNT_READY_PIN, (IOPORT_MODE_PULLUP | IOPORT_MODE_DEBOUNCE) );
+	ioport_set_pin_dir(TIMERA_READY_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(TIMERA_READY_PIN, (IOPORT_MODE_PULLUP | IOPORT_MODE_DEBOUNCE) );
   40123c:	2188      	movs	r1, #136	; 0x88
   40123e:	2053      	movs	r0, #83	; 0x53
   401240:	47b0      	blx	r6
@@ -3012,7 +3011,7 @@ static inline void stdio_serial_init(volatile void *usart, const usart_serial_op
   401246:	f8c4 50d4 	str.w	r5, [r4, #212]	; 0xd4
 	base->PIO_AIMER = mask;
   40124a:	f8c4 50b0 	str.w	r5, [r4, #176]	; 0xb0
-	ioport_set_pin_sense_mode(COUNT_READY_PIN, (IOPORT_SENSE_RISING));
+	ioport_set_pin_sense_mode(TIMERA_READY_PIN, (IOPORT_SENSE_RISING));
 	pio_handler_set(PIOC, ID_PIOC,
   40124e:	4b25      	ldr	r3, [pc, #148]	; (4012e4 <main+0x1f4>)
   401250:	9300      	str	r3, [sp, #0]
@@ -3025,7 +3024,7 @@ static inline void stdio_serial_init(volatile void *usart, const usart_serial_op
   NVIC->ISER[(uint32_t)((int32_t)IRQn) >> 5] = (uint32_t)(1 << ((uint32_t)((int32_t)IRQn) & (uint32_t)0x1F)); /* enable interrupt */
   40125e:	4b23      	ldr	r3, [pc, #140]	; (4012ec <main+0x1fc>)
   401260:	f8c3 8000 	str.w	r8, [r3]
-	COUNT_READY_MASK, (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
+	TIMERA_READY_MASK, (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
 	NVIC_EnableIRQ((IRQn_Type) ID_PIOC);
 	pio_handler_set_priority(PIOC,
   401264:	463a      	mov	r2, r7
@@ -3034,7 +3033,7 @@ static inline void stdio_serial_init(volatile void *usart, const usart_serial_op
   40126a:	4b21      	ldr	r3, [pc, #132]	; (4012f0 <main+0x200>)
   40126c:	4798      	blx	r3
 	(IRQn_Type) ID_PIOC, IRQ_PRIOR_PIO);
-	pio_enable_interrupt(PIOC, COUNT_READY_MASK);
+	pio_enable_interrupt(PIOC, TIMERA_READY_MASK);
   40126e:	4629      	mov	r1, r5
   401270:	4620      	mov	r0, r4
   401272:	4b20      	ldr	r3, [pc, #128]	; (4012f4 <main+0x204>)
