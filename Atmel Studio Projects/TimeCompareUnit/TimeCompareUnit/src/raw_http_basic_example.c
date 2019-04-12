@@ -96,24 +96,26 @@
 		"-- Compiled: "__DATE__" "__TIME__" --"STRING_EOL
 
 //////Declaring the 8-bits to read /////////////////////
-#define BIT0_PIN PIO_PD30_IDX      //Pin 28
-#define BIT1_PIN PIO_PD28_IDX      //Pin 27
-#define BIT2_PIN PIO_PD27_IDX      //Pin 26
-#define BIT3_PIN PIO_PA27_IDX      //Pin 25 
-#define BIT4_PIN PIO_PD12_IDX      //Pin 24
-#define BIT5_PIN PIO_PD11_IDX      //Pin 23
-#define BIT6_PIN PIO_PA5_IDX       //Pin 22
-#define BIT7_PIN PIO_PA9_IDX       //Pin 21
+#define TIMERA0_PIN PIO_PD30_IDX	//Pin 28
+#define TIMERA1_PIN PIO_PD28_IDX	//Pin 27
+#define TIMERA2_PIN PIO_PD27_IDX	//Pin 26
+#define TIMERA3_PIN PIO_PA_27_IDX	//Pin 25
+#define TIMERA4_PIN PIO_PD12_IDX	//Pin 24
+#define TIMERA5_PIN PIO_PD11_IDX	//Pin 23
+#define TIMERA6_PIN PIO_PA5_IDX		//Pin 22
+#define TIMERA7_PIN PIO_PA9_IDX		//Pin 21
+
 /////Declaring the 4 GPIOs to cycle through bytes///////
-#define BYTE1_SHIFT PIO_PB3_IDX    //Pin 20
-#define BYTE2_SHIFT PIO_PD21_IDX    //Pin 19
-#define BYTE3_SHIFT PIO_PD22_IDX    //Pin 18
-#define BYTE4_SHIFT PIO_PA24_IDX    //Pin 16
+#define TIMERA_SEL0_PIN PIO_PB3_IDX	//Pin20
+#define TIMERA_SEL1_PIN PIO_PD21_IDX//Pin 19
+#define TIMERA_SEL2_PIN PIO_PD22_IDX//Pin 18
+#define TIMERA_SEL3_PIN PIO_PA24_IDX//Pin 16
+
 ////Declaring the shift reg, the clear
-#define CLK_SHIFT PIO_PD24_IDX    //Pin 14
-#define COUNT_CLEAR_PIN PIO_PA13_IDX        //Pin 12
-#define COUNT_READY_PIN PIO_PC19_IDX
-#define COUNT_READY_MASK PIO_PC19
+#define TIMERA_REG_CLK_PIN PIO_PD24_IDX	//Pin 14
+#define TIMERA_CLR_PIN PIO_PA13_IDX		//Pin12
+#define TIMERA_READY_PIN PIO_PC19_IDX
+#define TIMERA_READY_MASK PIO_PC19
 
 
 /** IRQ priority for PIO (The lower the value, the greater the priority) */
@@ -125,7 +127,7 @@
 #define SAMPLE_PERIOD     1000
 
 
-typedef enum {None, Byte1, Byte2, Byte3, Byte4}byteSelect;
+typedef enum {Byte0, Byte1, Byte2, Byte3}byteSelect;
 
 /** Global g_ul_ms_ticks in milliseconds since start of application */
 // [main_var_ticks]
@@ -147,7 +149,7 @@ static void waitCount(uint32_t ticks)
 	}
 }
 
-uint8_t readTimerByte(byteSelect byte, char ** p_binaryString)
+uint8_t readTimerByteA(byteSelect byte, char ** p_binaryString)
 {
 	uint8_t volatile readByte = 0;
 	uint8_t volatile bit = 0;
@@ -157,83 +159,82 @@ uint8_t readTimerByte(byteSelect byte, char ** p_binaryString)
 	
 	switch(byte)
 	{
+		case Byte0:
+		ioport_set_pin_level(TIMERA_SEL0_PIN,LOW);
+		ioport_set_pin_level(TIMERA_SEL1_PIN,HIGH);
+		ioport_set_pin_level(TIMERA_SEL2_PIN,HIGH);
+		ioport_set_pin_level(TIMERA_SEL3_PIN,HIGH);
+		break;
+		
 		case Byte1:
-		ioport_set_pin_level(BYTE1_SHIFT,LOW);
-		ioport_set_pin_level(BYTE2_SHIFT,HIGH);
-		ioport_set_pin_level(BYTE3_SHIFT,HIGH);
-		ioport_set_pin_level(BYTE4_SHIFT,HIGH);
+		ioport_set_pin_level(TIMERA_SEL0_PIN,HIGH);
+		ioport_set_pin_level(TIMERA_SEL1_PIN,LOW);
+		ioport_set_pin_level(TIMERA_SEL2_PIN,HIGH);
+		ioport_set_pin_level(TIMERA_SEL3_PIN,HIGH);
 		break;
 		
 		case Byte2:
-		ioport_set_pin_level(BYTE1_SHIFT,HIGH);
-		ioport_set_pin_level(BYTE2_SHIFT,LOW);
-		ioport_set_pin_level(BYTE3_SHIFT,HIGH);
-		ioport_set_pin_level(BYTE4_SHIFT,HIGH);
+		ioport_set_pin_level(TIMERA_SEL0_PIN,HIGH);
+		ioport_set_pin_level(TIMERA_SEL1_PIN,HIGH);
+		ioport_set_pin_level(TIMERA_SEL2_PIN,LOW);
+		ioport_set_pin_level(TIMERA_SEL3_PIN,HIGH);
 		break;
 		
 		case Byte3:
-		ioport_set_pin_level(BYTE1_SHIFT,HIGH);
-		ioport_set_pin_level(BYTE2_SHIFT,HIGH);
-		ioport_set_pin_level(BYTE3_SHIFT,LOW);
-		ioport_set_pin_level(BYTE4_SHIFT,HIGH);
+		ioport_set_pin_level(TIMERA_SEL0_PIN,HIGH);
+		ioport_set_pin_level(TIMERA_SEL1_PIN,HIGH);
+		ioport_set_pin_level(TIMERA_SEL2_PIN,HIGH);
+		ioport_set_pin_level(TIMERA_SEL3_PIN,LOW);
 		break;
-		
-		case Byte4:
-		ioport_set_pin_level(BYTE1_SHIFT,HIGH);
-		ioport_set_pin_level(BYTE2_SHIFT,HIGH);
-		ioport_set_pin_level(BYTE3_SHIFT,HIGH);
-		ioport_set_pin_level(BYTE4_SHIFT,LOW);
-		break;
-		
-		case None:
+
 		default:
-		ioport_set_pin_level(BYTE1_SHIFT,HIGH);
-		ioport_set_pin_level(BYTE2_SHIFT,HIGH);
-		ioport_set_pin_level(BYTE3_SHIFT,HIGH);
-		ioport_set_pin_level(BYTE4_SHIFT,HIGH);
+		ioport_set_pin_level(TIMERA_SEL0_PIN,HIGH);
+		ioport_set_pin_level(TIMERA_SEL1_PIN,HIGH);
+		ioport_set_pin_level(TIMERA_SEL2_PIN,HIGH);
+		ioport_set_pin_level(TIMERA_SEL3_PIN,HIGH);
 		break;
 	}
 	
 	waitCount(10000);
-	bit = ioport_get_pin_level(BIT0_PIN);
+	bit = ioport_get_pin_level(TIMERA0_PIN);
 	readByte = readByte | bit;
 	sprintf(tempString, "%u", bit);
 	bitString[7]= tempString[0];
-	bit = ioport_get_pin_level(BIT1_PIN);
+	bit = ioport_get_pin_level(TIMERA1_PIN);
 	readByte = readByte | (bit<<1);
 	sprintf(tempString, "%u", bit);
 	bitString[6]= tempString[0];
-	bit = ioport_get_pin_level(BIT2_PIN);
+	bit = ioport_get_pin_level(TIMERA2_PIN);
 	readByte = readByte | (bit<<2);
 	sprintf(tempString, "%u", bit);
 	bitString[5]= tempString[0];
-	bit = ioport_get_pin_level(BIT3_PIN);
+	bit = ioport_get_pin_level(TIMERA3_PIN);
 	readByte = readByte | (bit<<3);
 	sprintf(tempString, "%u", bit);
 	bitString[4]= tempString[0];
-	bit = ioport_get_pin_level(BIT4_PIN);
+	bit = ioport_get_pin_level(TIMERA4_PIN);
 	readByte = readByte | (bit<<4);
 	sprintf(tempString, "%u", bit);
 	bitString[3]= tempString[0];
-	bit = ioport_get_pin_level(BIT5_PIN);
+	bit = ioport_get_pin_level(TIMERA5_PIN);
 	readByte = readByte | (bit<<5);
 	sprintf(tempString, "%u", bit);
 	bitString[2]= tempString[0];
-	bit = ioport_get_pin_level(BIT6_PIN);
+	bit = ioport_get_pin_level(TIMERA6_PIN);
 	readByte = readByte | (bit<<6);
 	sprintf(tempString, "%u", bit);
 	bitString[1]= tempString[0];
-	bit = ioport_get_pin_level(BIT7_PIN);
+	bit = ioport_get_pin_level(TIMERA7_PIN);
 	readByte = readByte | (bit<<7);
 	sprintf(tempString, "%u", bit);
 	bitString[0]= tempString[0];
 	
 	bitString[8]='\0';
 	
-	ioport_set_pin_level(BYTE1_SHIFT,HIGH);
-	ioport_set_pin_level(BYTE2_SHIFT,HIGH);
-	ioport_set_pin_level(BYTE3_SHIFT,HIGH);
-	ioport_set_pin_level(BYTE4_SHIFT,HIGH);
+	ioport_set_pin_level(TIMERA_SEL0_PIN,HIGH);
+	ioport_set_pin_level(TIMERA_SEL1_PIN,HIGH);
+	ioport_set_pin_level(TIMERA_SEL2_PIN,HIGH);
+	ioport_set_pin_level(TIMERA_SEL3_PIN,HIGH);
 	
 	strncpy(p_binaryString, bitString, 9);
 	
@@ -243,7 +244,7 @@ uint8_t readTimerByte(byteSelect byte, char ** p_binaryString)
 
 static void CountReady_Handler(uint32_t id, uint32_t mask)
 {
-	if (ID_PIOC == id && COUNT_READY_MASK == mask) {
+	if (ID_PIOC == id && TIMERA_READY_MASK == mask) {
 		uint8_t readByte = 0;
 		uint32_t readCount = 0;
 		char * p_bitString;
@@ -251,34 +252,34 @@ static void CountReady_Handler(uint32_t id, uint32_t mask)
 		p_bitString = &bitString;
 		
 		// Register counter outputs
-		ioport_set_pin_level(CLK_SHIFT, HIGH);
+		ioport_set_pin_level(TIMERA_REG_CLK_PIN, HIGH);
 		waitCount(10000);
-		ioport_set_pin_level(CLK_SHIFT, LOW);
+		ioport_set_pin_level(TIMERA_REG_CLK_PIN, LOW);
 		waitCount(10000);
 		
-		readByte = readTimerByte(Byte1, p_bitString);
+		readByte = readTimerByteA(Byte0, p_bitString);
 		readCount += (uint32_t) readByte;
 		printf("[1]%s : %u\r\n", bitString, readByte);
 		waitCount(10000);
 		
-		readByte = readTimerByte(Byte2, p_bitString);
+		readByte = readTimerByteA(Byte1, p_bitString);
 		readCount += ((uint32_t) readByte) << 8;
 		printf("[2]%s : %u\r\n", bitString, readByte);
 		waitCount(10000);
 		
-		readByte = readTimerByte(Byte3, p_bitString);
+		readByte = readTimerByteA(Byte2, p_bitString);
 		readCount += ((uint32_t) readByte) << 16;
 		printf("[3]%s : %u\r\n", bitString, readByte);
 		waitCount(10000);
 		
-		readByte = readTimerByte(Byte4, p_bitString);
+		readByte = readTimerByteA(Byte3, p_bitString);
 		readCount += ((uint32_t) readByte) << 24;
 		printf("[4]%s : %u\r\n", bitString, readByte);
 		
 		// Reset HW counter
-		ioport_set_pin_level(COUNT_CLEAR_PIN, LOW);
+		ioport_set_pin_level(TIMERA_CLR_PIN, LOW);
 		waitCount(10000);
-		ioport_set_pin_level(COUNT_CLEAR_PIN, HIGH);
+		ioport_set_pin_level(TIMERA_CLR_PIN, HIGH);
 		
 		printf("Count: %u\r\n", readCount);
 		printf("\r\n");
@@ -353,46 +354,46 @@ int main(void)
 	bool countResetPinValue = true;
 	
 	// Set counter Y read pins
-	ioport_set_pin_dir(BIT0_PIN, IOPORT_DIR_INPUT);
-	ioport_set_pin_mode(BIT0_PIN, IOPORT_MODE_PULLDOWN);
-	ioport_set_pin_dir(BIT1_PIN, IOPORT_DIR_INPUT);
-	ioport_set_pin_mode(BIT1_PIN, IOPORT_MODE_PULLDOWN);
-	ioport_set_pin_dir(BIT2_PIN, IOPORT_DIR_INPUT);
-	ioport_set_pin_mode(BIT2_PIN, IOPORT_MODE_PULLDOWN);
-	ioport_set_pin_dir(BIT3_PIN, IOPORT_DIR_INPUT);
-	ioport_set_pin_mode(BIT3_PIN, IOPORT_MODE_PULLDOWN);
-	ioport_set_pin_dir(BIT4_PIN, IOPORT_DIR_INPUT);
-	ioport_set_pin_mode(BIT4_PIN, IOPORT_MODE_PULLDOWN);
-	ioport_set_pin_dir(BIT5_PIN, IOPORT_DIR_INPUT);
-	ioport_set_pin_mode(BIT5_PIN, IOPORT_MODE_PULLDOWN);
-	ioport_set_pin_dir(BIT6_PIN, IOPORT_DIR_INPUT);
-	ioport_set_pin_mode(BIT6_PIN, IOPORT_MODE_PULLDOWN);
-	ioport_set_pin_dir(BIT7_PIN, IOPORT_DIR_INPUT);
-	ioport_set_pin_mode(BIT7_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(TIMERA0_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(TIMERA0_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(TIMERA1_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(TIMERA1_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(TIMERA2_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(TIMERA2_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(TIMERA3_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(TIMERA3_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(TIMERA4_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(TIMERA4_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(TIMERA5_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(TIMERA5_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(TIMERA6_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(TIMERA6_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(TIMERA7_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(TIMERA7_PIN, IOPORT_MODE_PULLDOWN);
 	
 	/////This is for byte shift
-	ioport_set_pin_dir(BYTE1_SHIFT, IOPORT_DIR_OUTPUT);
-	ioport_set_pin_dir(BYTE2_SHIFT, IOPORT_DIR_OUTPUT);
-	ioport_set_pin_dir(BYTE3_SHIFT, IOPORT_DIR_OUTPUT);
-	ioport_set_pin_dir(BYTE4_SHIFT, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(TIMERA_SEL0_PIN, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(TIMERA_SEL1_PIN, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(TIMERA_SEL2_PIN, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(TIMERA_SEL3_PIN, IOPORT_DIR_OUTPUT);
 	
-	ioport_set_pin_dir(CLK_SHIFT, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(TIMERA_REG_CLK_PIN, IOPORT_DIR_OUTPUT);
 	
-	ioport_set_pin_dir(COUNT_CLEAR_PIN, IOPORT_DIR_OUTPUT);
-	ioport_set_pin_mode(COUNT_CLEAR_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(TIMERA_CLR_PIN, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_mode(TIMERA_CLR_PIN, IOPORT_MODE_PULLDOWN);
 	
-	ioport_set_pin_level(COUNT_CLEAR_PIN, countResetPinValue);
+	ioport_set_pin_level(TIMERA_CLR_PIN, countResetPinValue);
 	
 	//Configure CountRead Pin and Interrupt
-	ioport_set_pin_dir(COUNT_READY_PIN, IOPORT_DIR_INPUT);
-	ioport_set_pin_mode(COUNT_READY_PIN, (IOPORT_MODE_PULLUP | IOPORT_MODE_DEBOUNCE) );
-	ioport_set_pin_sense_mode(COUNT_READY_PIN, (IOPORT_SENSE_RISING));
+	ioport_set_pin_dir(TIMERA_READY_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_mode(TIMERA_READY_PIN, (IOPORT_MODE_PULLUP | IOPORT_MODE_DEBOUNCE) );
+	ioport_set_pin_sense_mode(TIMERA_READY_PIN, (IOPORT_SENSE_RISING));
 	pio_handler_set(PIOC, ID_PIOC,
 	COUNT_READY_MASK, (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
 	NVIC_EnableIRQ((IRQn_Type) ID_PIOC);
 	pio_handler_set_priority(PIOC,
 	(IRQn_Type) ID_PIOC, IRQ_PRIOR_PIO);
-	pio_enable_interrupt(PIOC, COUNT_READY_MASK);
+	pio_enable_interrupt(PIOC, TIMERA_READY_MASK);
 	
 	if (SysTick_Config(sysclk_get_cpu_hz() / 1000)) {
 		printf("-F- Systick configuration error\r\n\r\n");
