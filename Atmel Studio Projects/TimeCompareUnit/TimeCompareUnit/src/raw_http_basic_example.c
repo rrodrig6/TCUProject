@@ -152,13 +152,24 @@
 #define COUNTERC_CLR_PIN PIO_PA2_IDX
 
 // COUNTER READY
-#define COUNTERA_READY_PIN PIO_PA21_IDX
-#define COUNTERA_READY_MASK PIO_PA21
-#define COUNTERB_READY_PIN PIO_PB4_IDX
-#define COUNTERB_READY_MASK PIO_PB4
-#define COUNTERC_READY_PIN PIO_PB13_IDX
-#define COUNTERC_READY_MASK PIO_PB13
+//#define COUNTERA_READY_PIN PIO_PA21_IDX
+//#define COUNTERA_READY_MASK PIO_PA21
+//#define COUNTERB_READY_PIN PIO_PB4_IDX
+//#define COUNTERB_READY_MASK PIO_PB4
+//#define COUNTERC_READY_PIN PIO_PB13_IDX
+//#define COUNTERC_READY_MASK PIO_PB13
 
+// SIGNAL READY
+// --Pair A
+#define SIGNAL1A_READY_PIN PIO_PA22_IDX
+#define SIGNAL1A_READY_MASK PIO_PA22
+#define SIGNAL2A_READY_PIN PIO_PA17_IDX
+#define SIGNAL2A_READY_MASK PIO_PA17
+// --Pair B
+#define SIGNAL1B_READY_PIN PIO_PC12_IDX
+#define SIGNAL1B_READY_MASK PIO_PC12
+#define SIGNAL2B_READY_PIN PIO_PC9_IDX
+#define SIGNAL2B_READY_MASK PIO_PC9
 
 /** IRQ priority for PIO (The lower the value, the greater the priority) */
 // [main_def_pio_irq_prior]
@@ -167,54 +178,79 @@
 
 /** ms */
 #define SAMPLE_PERIOD     1000
-
-
-typedef enum {Byte0, Byte1, Byte2, Byte3}byteSelect;
 	
-// A
-uint8_t counterAoutPins[8] = {COUNTERA0_PIN,
-		COUNTERA1_PIN,
-		COUNTERA2_PIN,
-		COUNTERA3_PIN,
-		COUNTERA4_PIN,
-		COUNTERA5_PIN,
-		COUNTERA6_PIN,
-		COUNTERA7_PIN};
+struct counter
+{
+	uint8_t selectPins[4];
+	uint8_t outputPins[8];
+	uint8_t registerClkPin;
+	uint8_t clearPin;
+	char label;
+};
 
-uint8_t counterAselPins[4] = {COUNTERA_SEL0_PIN,
-		COUNTERA_SEL1_PIN,
-		COUNTERA_SEL2_PIN,
-		COUNTERA_SEL3_PIN};
-		
-//	B
-uint8_t counterBoutPins[8] = {COUNTERB0_PIN,
-		COUNTERB1_PIN,
-		COUNTERB2_PIN,
-		COUNTERB3_PIN,
-		COUNTERB4_PIN,
-		COUNTERB5_PIN,
-		COUNTERB6_PIN,
-		COUNTERB7_PIN};
-
-uint8_t counterBselPins[4] = {COUNTERB_SEL0_PIN,
-		COUNTERB_SEL1_PIN,
-		COUNTERB_SEL2_PIN,
-		COUNTERB_SEL3_PIN};
-
-//	C
-uint8_t counterCoutPins[8] = {COUNTERC0_PIN,
-	COUNTERC1_PIN,
-	COUNTERC2_PIN,
-	COUNTERC3_PIN,
-	COUNTERC4_PIN,
-	COUNTERC5_PIN,
-	COUNTERC6_PIN,
-COUNTERC7_PIN};
-
-uint8_t counterCselPins[4] = {COUNTERC_SEL0_PIN,
-	COUNTERC_SEL1_PIN,
-	COUNTERC_SEL2_PIN,
-COUNTERC_SEL3_PIN};
+struct counter counterA = {
+							{	COUNTERA_SEL0_PIN,
+								COUNTERA_SEL1_PIN,
+								COUNTERA_SEL2_PIN,
+								COUNTERA_SEL3_PIN	},
+								
+							{	COUNTERA0_PIN,
+								COUNTERA1_PIN,
+								COUNTERA2_PIN,
+								COUNTERA3_PIN,
+								COUNTERA4_PIN,
+								COUNTERA5_PIN,
+								COUNTERA6_PIN,
+								COUNTERA7_PIN		},
+								
+								COUNTERA_REG_CLK_PIN,
+								
+								COUNTERA_CLR_PIN,
+								
+								'A'
+							};
+							
+struct counter counterB = {
+							{	COUNTERB_SEL0_PIN,
+								COUNTERB_SEL1_PIN,
+								COUNTERB_SEL2_PIN,
+								COUNTERB_SEL3_PIN	},
+							{	COUNTERB0_PIN,
+								COUNTERB1_PIN,
+								COUNTERB2_PIN,
+								COUNTERB3_PIN,
+								COUNTERB4_PIN,
+								COUNTERB5_PIN,
+								COUNTERB6_PIN,
+								COUNTERB7_PIN		},
+								
+								COUNTERB_REG_CLK_PIN,
+								
+								COUNTERB_CLR_PIN,
+								
+								'B'
+							};
+							
+struct counter counterC = {
+							{	COUNTERC_SEL0_PIN,
+								COUNTERC_SEL1_PIN,
+								COUNTERC_SEL2_PIN,
+								COUNTERC_SEL3_PIN	},
+							{	COUNTERC0_PIN,
+								COUNTERC1_PIN,
+								COUNTERC2_PIN,
+								COUNTERC3_PIN,
+								COUNTERC4_PIN,
+								COUNTERC5_PIN,
+								COUNTERC6_PIN,
+								COUNTERC7_PIN		},
+								
+								COUNTERC_REG_CLK_PIN,
+								
+								COUNTERC_CLR_PIN,
+								
+								'C'
+							};
 
 /** Global g_ul_ms_ticks in milliseconds since start of application */
 // [main_var_ticks]
@@ -236,50 +272,29 @@ static void waitCount(uint32_t ticks)
 	}
 }
 
-uint8_t readCounterByte(uint8_t outputPins[], uint8_t selectPins[], byteSelect byte, char ** p_binaryString)
+static void counterio_pulse_pin(uint8_t pin, uint8_t direction, uint32_t wait)
+{
+	ioport_set_pin_level(pin, direction);
+	waitCount(wait);
+	ioport_set_pin_level(pin, !direction);
+}
+
+uint8_t readCounterByte(uint8_t outputPins[], uint8_t selectPins[], uint8_t byte, char ** p_binaryString)
 {
 	uint8_t volatile readByte = 0;
 	uint8_t volatile bit = 0;
 	char bitString[9];
 	char tempString[2];
 	
-	
-	switch(byte)
+	// Set byte pin low and the rest high
+	for (uint8_t i = 0; i<4; i++)
 	{
-		case Byte0:
-		ioport_set_pin_level(selectPins[0],LOW);
-		ioport_set_pin_level(selectPins[1],HIGH);
-		ioport_set_pin_level(selectPins[2],HIGH);
-		ioport_set_pin_level(selectPins[3],HIGH);
-		break;
-		
-		case Byte1:
-		ioport_set_pin_level(selectPins[0],HIGH);
-		ioport_set_pin_level(selectPins[1],LOW);
-		ioport_set_pin_level(selectPins[2],HIGH);
-		ioport_set_pin_level(selectPins[3],HIGH);
-		break;
-		
-		case Byte2:
-		ioport_set_pin_level(selectPins[0],HIGH);
-		ioport_set_pin_level(selectPins[1],HIGH);
-		ioport_set_pin_level(selectPins[2],LOW);
-		ioport_set_pin_level(selectPins[3],HIGH);
-		break;
-		
-		case Byte3:
-		ioport_set_pin_level(selectPins[0],HIGH);
-		ioport_set_pin_level(selectPins[1],HIGH);
-		ioport_set_pin_level(selectPins[2],HIGH);
-		ioport_set_pin_level(selectPins[3],LOW);
-		break;
-
-		default:
-		ioport_set_pin_level(selectPins[0],HIGH);
-		ioport_set_pin_level(selectPins[1],HIGH);
-		ioport_set_pin_level(selectPins[2],HIGH);
-		ioport_set_pin_level(selectPins[3],HIGH);
-		break;
+		if(i==byte){
+			ioport_set_pin_level(selectPins[i], LOW);
+		}
+		else{
+			ioport_set_pin_level(selectPins[i], HIGH);
+		}
 	}
 	
 	waitCount(10000);
@@ -306,130 +321,66 @@ uint8_t readCounterByte(uint8_t outputPins[], uint8_t selectPins[], byteSelect b
 	return readByte;
 }
 
+static void printCountValue(struct counter cntr){
+	uint8_t readByte = 0;
+	uint32_t readCount = 0;
+	char * p_bitString;
+	char bitString[9] = "";
+	p_bitString = &bitString;
+	
+	// Register counter outputs
+	counterio_pulse_pin(cntr.registerClkPin, HIGH, 10000);
+	waitCount(10000);
+	
+	for(uint8_t byteIndex = 0; byteIndex<4; byteIndex++)
+	{
+		readByte = readCounterByte(cntr.outputPins, cntr.selectPins, byteIndex, p_bitString);
+		readCount += ((uint32_t) readByte) << (8*byteIndex);
+		printf("[%c%d]%s : %u\r\n", cntr.label, byteIndex, bitString, readByte);
+		waitCount(10000);
+	}
+	
+	// Reset HW counter and signal ready FFs
+	counterio_pulse_pin(cntr.clearPin, LOW, 10000);
+	
+	printf("Count: %u\r\n", readCount);
+	printf("\r\n");
+}
+
 static void CountReady_Handler(uint32_t id, uint32_t mask)
 {
-	// COUNTERA READY
-	if(ID_PIOB == id){
-		if (COUNTERC_READY_MASK == mask) {
-			uint8_t readByte = 0;
-			uint32_t readCount = 0;
-			char * p_bitString;
-			char bitString[9] = "";
-			p_bitString = &bitString;
-		
-			// Register counter outputs
-			ioport_set_pin_level(COUNTERC_REG_CLK_PIN, HIGH);
-			waitCount(10000);
-			ioport_set_pin_level(COUNTERC_REG_CLK_PIN, LOW);
-			waitCount(10000);
-		
-			readByte = readCounterByte(counterCoutPins, counterCselPins, Byte0, p_bitString);
-			readCount += (uint32_t) readByte;
-			printf("[C0]%s : %u\r\n", bitString, readByte);
-			waitCount(10000);
-		
-			readByte = readCounterByte(counterCoutPins, counterCselPins, Byte1, p_bitString);
-			readCount += ((uint32_t) readByte) << 8;
-			printf("[C1]%s : %u\r\n", bitString, readByte);
-			waitCount(10000);
-			
-			readByte = readCounterByte(counterCoutPins, counterCselPins, Byte2, p_bitString);
-			readCount += ((uint32_t) readByte) << 16;
-			printf("[C2]%s : %u\r\n", bitString, readByte);
-			waitCount(10000);
-			
-			readByte = readCounterByte(counterCoutPins, counterCselPins, Byte3, p_bitString);
-			readCount += ((uint32_t) readByte) << 24;
-			printf("[C3]%s : %u\r\n", bitString, readByte);
-			
-			// Reset HW counter
-			ioport_set_pin_level(COUNTERC_CLR_PIN, LOW);
-			waitCount(10000);
-			ioport_set_pin_level(COUNTERC_CLR_PIN, HIGH);
-			
-			printf("Count: %u\r\n", readCount);
-			printf("\r\n");
+	if(ID_PIOA == id){
+		if(SIGNAL1A_READY_MASK == mask ){
+			if(ioport_get_pin_level(SIGNAL2A_READY_PIN))
+			{
+				printf("1 & 2 A High\r\n");
+				printCountValue(counterA);
+			}
 		}
-		else if (COUNTERB_READY_MASK == mask) {
-			uint8_t readByte = 0;
-			uint32_t readCount = 0;
-			char * p_bitString;
-			char bitString[9] = "";
-			p_bitString = &bitString;
-			
-			// Register counter outputs
-			ioport_set_pin_level(COUNTERB_REG_CLK_PIN, HIGH);
-			waitCount(10000);
-			ioport_set_pin_level(COUNTERB_REG_CLK_PIN, LOW);
-			waitCount(10000);
-			
-			readByte = readCounterByte(counterBoutPins, counterBselPins, Byte0, p_bitString);
-			readCount += (uint32_t) readByte;
-			printf("[B0]%s : %u\r\n", bitString, readByte);
-			waitCount(10000);
-			
-			readByte = readCounterByte(counterBoutPins, counterBselPins, Byte1, p_bitString);
-			readCount += ((uint32_t) readByte) << 8;
-			printf("[B1]%s : %u\r\n", bitString, readByte);
-			waitCount(10000);
-			
-			readByte = readCounterByte(counterBoutPins, counterBselPins, Byte2, p_bitString);
-			readCount += ((uint32_t) readByte) << 16;
-			printf("[B2]%s : %u\r\n", bitString, readByte);
-			waitCount(10000);
-			
-			readByte = readCounterByte(counterBoutPins, counterBselPins, Byte3, p_bitString);
-			readCount += ((uint32_t) readByte) << 24;
-			printf("[B3]%s : %u\r\n", bitString, readByte);
-			
-			// Reset HW counter
-			ioport_set_pin_level(COUNTERB_CLR_PIN, LOW);
-			waitCount(10000);
-			ioport_set_pin_level(COUNTERB_CLR_PIN, HIGH);
-			
-			printf("Count: %u\r\n", readCount);
-			printf("\r\n");
+		else if( SIGNAL2A_READY_MASK == mask){
+			if(ioport_get_pin_level(SIGNAL1A_READY_PIN))
+			{
+				printf("2 & 1 A High\r\n");
+				printCountValue(counterA);
+			}
 		}
-		if (ID_PIOA == id && COUNTERA_READY_MASK == mask) {
-			uint8_t readByte = 0;
-			uint32_t readCount = 0;
-			char * p_bitString;
-			char bitString[9] = "";
-			p_bitString = &bitString;
-			
-			// Register counter outputs
-			ioport_set_pin_level(COUNTERA_REG_CLK_PIN, HIGH);
-			waitCount(10000);
-			ioport_set_pin_level(COUNTERA_REG_CLK_PIN, LOW);
-			waitCount(10000);
-			
-			readByte = readCounterByte(counterAoutPins, counterAselPins, Byte0, p_bitString);
-			readCount += (uint32_t) readByte;
-			printf("[A0]%s : %u\r\n", bitString, readByte);
-			waitCount(10000);
-			
-			readByte = readCounterByte(counterAoutPins, counterAselPins, Byte1, p_bitString);
-			readCount += ((uint32_t) readByte) << 8;
-			printf("[A1]%s : %u\r\n", bitString, readByte);
-			waitCount(10000);
-			
-			readByte = readCounterByte(counterAoutPins, counterAselPins, Byte2, p_bitString);
-			readCount += ((uint32_t) readByte) << 16;
-			printf("[A2]%s : %u\r\n", bitString, readByte);
-			waitCount(10000);
-			
-			readByte = readCounterByte(counterAoutPins, counterAselPins, Byte3, p_bitString);
-			readCount += ((uint32_t) readByte) << 24;
-			printf("[A3]%s : %u\r\n", bitString, readByte);
-			
-			// Reset HW counter
-			ioport_set_pin_level(COUNTERA_CLR_PIN, LOW);
-			waitCount(10000);
-			ioport_set_pin_level(COUNTERA_CLR_PIN, HIGH);
-			
-			printf("Count: %u\r\n", readCount);
-			printf("\r\n");
-		}	
+	}
+
+	if(ID_PIOC ==id){
+		if(SIGNAL1B_READY_MASK == mask ){
+			if(ioport_get_pin_level(SIGNAL2B_READY_PIN))
+			{
+				printf("1 & 2 B High\r\n");
+				printCountValue(counterB);
+			}
+		}
+		else if( SIGNAL2B_READY_MASK == mask){
+			if(ioport_get_pin_level(SIGNAL1B_READY_PIN))
+			{
+				printf("2 & 1 B High\r\n");
+				printCountValue(counterB);
+			}
+		}
 	}
 }
 
@@ -484,6 +435,8 @@ int main(void)
 	/* Configure debug UART */
 	configure_console();
 
+	printf("--- Console configured\r\n");
+
 	/* Print example information. */
 	//puts(STRING_HEADER);
 
@@ -493,76 +446,108 @@ int main(void)
 	/* Bring up the web server. */
 	//httpd_init();
 	
-	printf("---Starting---\r\n\r\n");
+	
 	
 	
 	bool countResetPinValue = true;
 	
 	// Set counter Y read pins
 	for(uint8_t i = 0; i < 8 ; i++){
-		ioport_set_pin_dir(counterAoutPins[i], IOPORT_DIR_INPUT);
-		ioport_set_pin_dir(counterBoutPins[i], IOPORT_DIR_INPUT);
-		ioport_set_pin_dir(counterCoutPins[i], IOPORT_DIR_INPUT);
-		ioport_set_pin_mode(counterAoutPins[i], IOPORT_MODE_PULLDOWN);
-		ioport_set_pin_mode(counterBoutPins[i], IOPORT_MODE_PULLDOWN);
-		ioport_set_pin_mode(counterCoutPins[i], IOPORT_MODE_PULLDOWN);
+		ioport_set_pin_dir(counterA.outputPins[i], IOPORT_DIR_INPUT);
+		ioport_set_pin_dir(counterB.outputPins[i], IOPORT_DIR_INPUT);
+		ioport_set_pin_dir(counterC.outputPins[i], IOPORT_DIR_INPUT);
+		ioport_set_pin_mode(counterA.outputPins[i], IOPORT_MODE_PULLDOWN);
+		ioport_set_pin_mode(counterB.outputPins[i], IOPORT_MODE_PULLDOWN);
+		ioport_set_pin_mode(counterC.outputPins[i], IOPORT_MODE_PULLDOWN);
 	}
+	
+	printf("--- Counter data pins configured\r\n");
 	
 	/////This is for byte shift
 	for(uint8_t i = 0; i < 4 ; i++){
-		ioport_set_pin_dir(counterAselPins[i], IOPORT_DIR_OUTPUT);
-		ioport_set_pin_dir(counterBselPins[i], IOPORT_DIR_OUTPUT);
-		ioport_set_pin_dir(counterCselPins[i], IOPORT_DIR_OUTPUT);
+		ioport_set_pin_dir(counterA.selectPins[i], IOPORT_DIR_OUTPUT);
+		ioport_set_pin_dir(counterB.selectPins[i], IOPORT_DIR_OUTPUT);
+		ioport_set_pin_dir(counterC.selectPins[i], IOPORT_DIR_OUTPUT);
 	}
 	
-	ioport_set_pin_dir(COUNTERA_REG_CLK_PIN, IOPORT_DIR_OUTPUT);
-	ioport_set_pin_dir(COUNTERB_REG_CLK_PIN, IOPORT_DIR_OUTPUT);
-	ioport_set_pin_dir(COUNTERC_REG_CLK_PIN, IOPORT_DIR_OUTPUT);
+	printf("--- Counter select pins configured\r\n");
 	
-	ioport_set_pin_dir(COUNTERA_CLR_PIN, IOPORT_DIR_OUTPUT);
-	ioport_set_pin_mode(COUNTERA_CLR_PIN, IOPORT_MODE_PULLDOWN);
-	ioport_set_pin_dir(COUNTERB_CLR_PIN, IOPORT_DIR_OUTPUT);
-	ioport_set_pin_mode(COUNTERB_CLR_PIN, IOPORT_MODE_PULLDOWN);
-	ioport_set_pin_dir(COUNTERC_CLR_PIN, IOPORT_DIR_OUTPUT);
-	ioport_set_pin_mode(COUNTERC_CLR_PIN, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(counterA.registerClkPin, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(counterB.registerClkPin, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(counterC.registerClkPin, IOPORT_DIR_OUTPUT);
 	
-	ioport_set_pin_level(COUNTERA_CLR_PIN, countResetPinValue);
-	ioport_set_pin_level(COUNTERB_CLR_PIN, countResetPinValue);
-	ioport_set_pin_level(COUNTERC_CLR_PIN, countResetPinValue);
+	printf("--- Counter register clock pins configured\r\n");
 	
+	ioport_set_pin_dir(counterA.clearPin, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_mode(counterA.clearPin, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(counterB.clearPin, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_mode(counterB.clearPin, IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_dir(counterC.clearPin, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_mode(counterC.clearPin, IOPORT_MODE_PULLDOWN);
+	
+	ioport_set_pin_level(counterA.clearPin, countResetPinValue);
+	ioport_set_pin_level(counterB.clearPin, countResetPinValue);
+	ioport_set_pin_level(counterC.clearPin, countResetPinValue);
+	
+	printf("--- Counter clear pins configured\r\n");
 	//Configure CountRead Pin and Interrupt
-	ioport_set_pin_dir(COUNTERA_READY_PIN, IOPORT_DIR_INPUT);
-	ioport_set_pin_dir(COUNTERB_READY_PIN, IOPORT_DIR_INPUT);
-	ioport_set_pin_dir(COUNTERC_READY_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_dir(SIGNAL1A_READY_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_dir(SIGNAL2A_READY_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_dir(SIGNAL1B_READY_PIN, IOPORT_DIR_INPUT);
+	ioport_set_pin_dir(SIGNAL2B_READY_PIN, IOPORT_DIR_INPUT);
 	
-	ioport_set_pin_mode(COUNTERA_READY_PIN, (IOPORT_MODE_PULLUP | IOPORT_MODE_DEBOUNCE) );
-	ioport_set_pin_mode(COUNTERB_READY_PIN, (IOPORT_MODE_PULLUP | IOPORT_MODE_DEBOUNCE) );
-	ioport_set_pin_mode(COUNTERC_READY_PIN, (IOPORT_MODE_PULLUP | IOPORT_MODE_DEBOUNCE) );
+	printf("--- Set signal ready pin direction\r\n");
 	
-	ioport_set_pin_sense_mode(COUNTERA_READY_PIN, (IOPORT_SENSE_RISING));
-	ioport_set_pin_sense_mode(COUNTERB_READY_PIN, (IOPORT_SENSE_RISING));
-	ioport_set_pin_sense_mode(COUNTERC_READY_PIN, (IOPORT_SENSE_RISING));
+	ioport_set_pin_mode(SIGNAL1A_READY_PIN, (IOPORT_MODE_PULLUP | IOPORT_MODE_DEBOUNCE) );
+	ioport_set_pin_mode(SIGNAL2A_READY_PIN, (IOPORT_MODE_PULLUP | IOPORT_MODE_DEBOUNCE) );
+	ioport_set_pin_mode(SIGNAL1B_READY_PIN, (IOPORT_MODE_PULLUP | IOPORT_MODE_DEBOUNCE) );
+	ioport_set_pin_mode(SIGNAL2B_READY_PIN, (IOPORT_MODE_PULLUP | IOPORT_MODE_DEBOUNCE) );
 	
-	pio_handler_set(PIOA, ID_PIOA, COUNTERA_READY_MASK, (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
-	pio_handler_set(PIOB, ID_PIOB, (COUNTERB_READY_MASK || COUNTERC_READY_MASK), (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
+	printf("--- Set signal ready pin mode\r\n");
+	
+	ioport_set_pin_sense_mode(SIGNAL1A_READY_PIN, (IOPORT_SENSE_RISING));
+	ioport_set_pin_sense_mode(SIGNAL2A_READY_PIN, (IOPORT_SENSE_RISING));
+	ioport_set_pin_sense_mode(SIGNAL1B_READY_PIN, (IOPORT_SENSE_RISING));
+	ioport_set_pin_sense_mode(SIGNAL2B_READY_PIN, (IOPORT_SENSE_RISING));
+	
+	printf("--- Set signal ready pin sense\r\n");
+	
+	pio_handler_set(PIOA, ID_PIOA, (SIGNAL1A_READY_MASK || SIGNAL2A_READY_MASK), (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
+	pio_handler_set(PIOC, ID_PIOC, (SIGNAL1B_READY_MASK || SIGNAL2B_READY_MASK), (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
+	
+	printf("--- Set signal ready handler\r\n");
 	
 	NVIC_EnableIRQ((IRQn_Type) ID_PIOA);
-	NVIC_EnableIRQ((IRQn_Type) ID_PIOB);
+	NVIC_EnableIRQ((IRQn_Type) ID_PIOC);
+	
+	printf("--- Enabled IRQ\r\n");
 	
 	pio_handler_set_priority(PIOA, (IRQn_Type) ID_PIOA, IRQ_PRIOR_PIO);
-	pio_handler_set_priority(PIOB, (IRQn_Type) ID_PIOB, IRQ_PRIOR_PIO);
+	pio_handler_set_priority(PIOC, (IRQn_Type) ID_PIOB, IRQ_PRIOR_PIO);
 	
-	pio_enable_interrupt(PIOA, COUNTERA_READY_MASK);
-	pio_enable_interrupt(PIOB, ( COUNTERB_READY_MASK || COUNTERC_READY_MASK ));
+	printf("--- Set handler priority\r\n");
+	
+	pio_enable_interrupt(PIOA, (SIGNAL1A_READY_MASK || SIGNAL2A_READY_MASK));
+	pio_enable_interrupt(PIOC, (SIGNAL1B_READY_MASK || SIGNAL2B_READY_MASK));
+	
+	printf("--- Enabled interrupt\r\n");
 	
 	if (SysTick_Config(sysclk_get_cpu_hz() / 1000)) {
 		printf("-F- Systick configuration error\r\n\r\n");
 		while (1);
 	}
-	
-	printf("I/O Configured\r\n\r\n");
+
+	printf("--- Starting Main Loop ---\r\n\r\n");
 	
 	while (true) {
+		
+		printCountValue(counterA);
+		waitCount(10000);
+		printCountValue(counterB);
+		waitCount(10000);
+		printCountValue(counterC);
+		mdelay(1000);
+		
 		
 	}
 
