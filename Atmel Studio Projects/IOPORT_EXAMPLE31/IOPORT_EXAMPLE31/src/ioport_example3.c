@@ -115,6 +115,8 @@
 /** ms */
 #define SAMPLE_PERIOD     1000
 
+#define OSCILLATOR_PERIOD 10000 //ns
+
 
 typedef enum {None, Byte1, Byte2, Byte3, Byte4}byteSelect;
 
@@ -272,6 +274,7 @@ static void CountReady_Handler(uint32_t id, uint32_t mask)
 		ioport_set_pin_level(COUNT_CLEAR_PIN, HIGH);
 		
 		printf("Count: %u\r\n", readCount);
+		printf("delta-t: %uns\r\n", readCount * OSCILLATOR_PERIOD);
 		printf("\r\n");
 	}
 }
