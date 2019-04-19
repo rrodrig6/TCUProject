@@ -163,11 +163,11 @@
 // --Pair A
 #define SIGNAL1A_READY_PIN PIO_PA22_IDX
 #define SIGNAL1A_READY_MASK PIO_PA22
-#define SIGNAL2A_READY_PIN PIO_PA17_IDX
-#define SIGNAL2A_READY_MASK PIO_PA17
+#define SIGNAL2A_READY_PIN PIO_PA18_IDX
+#define SIGNAL2A_READY_MASK PIO_PA18
 // --Pair B
-#define SIGNAL1B_READY_PIN PIO_PC12_IDX
-#define SIGNAL1B_READY_MASK PIO_PC12
+#define SIGNAL1B_READY_PIN PIO_PC14_IDX
+#define SIGNAL1B_READY_MASK PIO_PC14
 #define SIGNAL2B_READY_PIN PIO_PC9_IDX
 #define SIGNAL2B_READY_MASK PIO_PC9
 
@@ -349,7 +349,9 @@ static void printCountValue(struct counter cntr){
 
 static void CountReady_Handler(uint32_t id, uint32_t mask)
 {
+	//printf("CountReady Handler\r\n -   ID: %u\r\n - MASK: %u\r\n", id, mask);
 	if(ID_PIOA == id){
+		/*
 		if(SIGNAL1A_READY_MASK == mask ){
 			if(ioport_get_pin_level(SIGNAL2A_READY_PIN))
 			{
@@ -364,9 +366,18 @@ static void CountReady_Handler(uint32_t id, uint32_t mask)
 				printCountValue(counterA);
 			}
 		}
+		*/
+		if(SIGNAL1A_READY_MASK | SIGNAL2A_READY_MASK == mask ){
+			if(ioport_get_pin_level(SIGNAL1A_READY_PIN) && ioport_get_pin_level(SIGNAL2A_READY_PIN))
+			{
+				//printf("1 & 2 A High\r\n");
+				printCountValue(counterA);
+			}
+		}
 	}
 
 	if(ID_PIOC ==id){
+		/*
 		if(SIGNAL1B_READY_MASK == mask ){
 			if(ioport_get_pin_level(SIGNAL2B_READY_PIN))
 			{
@@ -378,6 +389,14 @@ static void CountReady_Handler(uint32_t id, uint32_t mask)
 			if(ioport_get_pin_level(SIGNAL1B_READY_PIN))
 			{
 				printf("2 & 1 B High\r\n");
+				printCountValue(counterB);
+			}
+		}
+		*/
+		if(SIGNAL1B_READY_MASK | SIGNAL2B_READY_MASK == mask ){
+			if(ioport_get_pin_level(SIGNAL1B_READY_PIN) && ioport_get_pin_level(SIGNAL2B_READY_PIN))
+			{
+				//printf("1 & 2 B High\r\n");
 				printCountValue(counterB);
 			}
 		}
@@ -436,9 +455,6 @@ int main(void)
 	configure_console();
 
 	printf("--- Console configured\r\n");
-
-	/* Print example information. */
-	//puts(STRING_HEADER);
 
 	/* Bring up the ethernet interface & initialize timer0, channel0. */
 	//init_ethernet();
@@ -512,8 +528,9 @@ int main(void)
 	
 	printf("--- Set signal ready pin sense\r\n");
 	
-	pio_handler_set(PIOA, ID_PIOA, (SIGNAL1A_READY_MASK || SIGNAL2A_READY_MASK), (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
-	pio_handler_set(PIOC, ID_PIOC, (SIGNAL1B_READY_MASK || SIGNAL2B_READY_MASK), (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
+	//pio_handler_set(PIOA, ID_PIOA, SIGNAL1A_READY_MASK, (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
+	pio_handler_set(PIOA, ID_PIOA, (SIGNAL1A_READY_MASK | SIGNAL2A_READY_MASK), (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
+	pio_handler_set(PIOC, ID_PIOC, (SIGNAL1B_READY_MASK | SIGNAL2B_READY_MASK), (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
 	
 	printf("--- Set signal ready handler\r\n");
 	
@@ -527,8 +544,9 @@ int main(void)
 	
 	printf("--- Set handler priority\r\n");
 	
-	pio_enable_interrupt(PIOA, (SIGNAL1A_READY_MASK || SIGNAL2A_READY_MASK));
-	pio_enable_interrupt(PIOC, (SIGNAL1B_READY_MASK || SIGNAL2B_READY_MASK));
+	//pio_enable_interrupt(PIOA, SIGNAL1A_READY_MASK);
+	pio_enable_interrupt(PIOA, (SIGNAL1A_READY_MASK | SIGNAL2A_READY_MASK));
+	pio_enable_interrupt(PIOC, (SIGNAL1B_READY_MASK | SIGNAL2B_READY_MASK));
 	
 	printf("--- Enabled interrupt\r\n");
 	
@@ -541,13 +559,24 @@ int main(void)
 	
 	while (true) {
 		
+		/*
 		printCountValue(counterA);
 		waitCount(10000);
 		printCountValue(counterB);
 		waitCount(10000);
 		printCountValue(counterC);
 		mdelay(1000);
+		*/
 		
+		/*
+		bool A1 = ioport_get_pin_level(SIGNAL1A_READY_PIN);
+		bool A2 = ioport_get_pin_level(SIGNAL2A_READY_PIN);
+		bool B1 = ioport_get_pin_level(SIGNAL1B_READY_PIN);
+		bool B2 = ioport_get_pin_level(SIGNAL2B_READY_PIN);
+		
+		printf("1A: %u\r\n2A: %u\r\n1B: %u\r\n2B: %u\r\n\r\n\r\n", A1, A2, B1, B2 );
+		mdelay(1000);
+		*/
 		
 	}
 
