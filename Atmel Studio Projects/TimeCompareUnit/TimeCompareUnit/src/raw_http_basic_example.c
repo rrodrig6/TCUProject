@@ -94,6 +94,11 @@
 #define STRING_HEADER "-- Raw HTTP Basic Example --"STRING_EOL \
 		"-- "BOARD_NAME" --"STRING_EOL \
 		"-- Compiled: "__DATE__" "__TIME__" --"STRING_EOL
+		
+// Read mode of 1 is the signal pair mode
+// Read mode of 0 is the single FF mode using SIGNAL1A_PIN
+#define READ_MODE 1
+#define OSCILLATOR_PERIOD 1000 //ns
 
 // DATA
 // --COUNTERA
@@ -178,7 +183,12 @@
 
 /** ms */
 #define SAMPLE_PERIOD     1000
+
+
 	
+	
+// ---- Counters ----
+
 struct counter
 {
 	uint8_t selectPins[4];
@@ -251,6 +261,13 @@ struct counter counterC = {
 								
 								'C'
 							};
+							
+// ---- Global Vars ----
+
+bool sig1A_flag;
+bool sig2A_flag;
+bool sig1B_flag;
+bool sig2B_flag;
 
 /** Global g_ul_ms_ticks in milliseconds since start of application */
 // [main_var_ticks]
@@ -344,63 +361,55 @@ static void printCountValue(struct counter cntr){
 	counterio_pulse_pin(cntr.clearPin, LOW, 10000);
 	
 	printf("Count: %u\r\n", readCount);
+	printf("delta-t: %uns\r\n", readCount * OSCILLATOR_PERIOD);
 	printf("\r\n");
 }
 
 static void CountReady_Handler(uint32_t id, uint32_t mask)
 {
-	//printf("CountReady Handler\r\n -   ID: %u\r\n - MASK: %u\r\n", id, mask);
+#if READ_MODE
 	if(ID_PIOA == id){
-		/*
-		if(SIGNAL1A_READY_MASK == mask ){
-			if(ioport_get_pin_level(SIGNAL2A_READY_PIN))
-			{
-				printf("1 & 2 A High\r\n");
-				printCountValue(counterA);
+		if(SIGNAL1A_READY_MASK | SIGNAL2A_READY_MASK == mask){
+			if(ioport_get_pin_level(SIGNAL1A_READY_PIN)){
+				sig1A_flag = true;
+			}
+			else{
+				sig1A_flag = false;
+			}
+			if(ioport_get_pin_level(SIGNAL2A_READY_PIN)){
+				sig2A_flag = true;
+			}
+			else{
+				sig2A_flag = false;
+				
 			}
 		}
-		else if( SIGNAL2A_READY_MASK == mask){
-			if(ioport_get_pin_level(SIGNAL1A_READY_PIN))
-			{
-				printf("2 & 1 A High\r\n");
-				printCountValue(counterA);
-			}
-		}
-		*/
-		if(SIGNAL1A_READY_MASK | SIGNAL2A_READY_MASK == mask ){
-			if(ioport_get_pin_level(SIGNAL1A_READY_PIN) && ioport_get_pin_level(SIGNAL2A_READY_PIN))
-			{
-				//printf("1 & 2 A High\r\n");
-				printCountValue(counterA);
-			}
-		}
+		
 	}
 
 	if(ID_PIOC ==id){
-		/*
-		if(SIGNAL1B_READY_MASK == mask ){
-			if(ioport_get_pin_level(SIGNAL2B_READY_PIN))
-			{
-				printf("1 & 2 B High\r\n");
-				printCountValue(counterB);
+		if(SIGNAL1B_READY_MASK |SIGNAL2B_READY_MASK == mask){
+			if(ioport_get_pin_level(SIGNAL1B_READY_PIN)){
+				sig1B_flag = true;
 			}
-		}
-		else if( SIGNAL2B_READY_MASK == mask){
-			if(ioport_get_pin_level(SIGNAL1B_READY_PIN))
-			{
-				printf("2 & 1 B High\r\n");
-				printCountValue(counterB);
+			else{
+				sig1B_flag = false;
 			}
-		}
-		*/
-		if(SIGNAL1B_READY_MASK | SIGNAL2B_READY_MASK == mask ){
-			if(ioport_get_pin_level(SIGNAL1B_READY_PIN) && ioport_get_pin_level(SIGNAL2B_READY_PIN))
-			{
-				//printf("1 & 2 B High\r\n");
-				printCountValue(counterB);
+			if(ioport_get_pin_level(SIGNAL2B_READY_PIN)){
+				sig2B_flag = true;
+			}
+			else{
+				sig2B_flag = false;
 			}
 		}
 	}
+#else
+	if(ID_PIOA == id){
+		if(SIGNAL1A_READY_MASK == mask){
+			sig1A_flag = !sig1A_flag;
+		}
+	}
+#endif
 }
 
 /**
@@ -455,19 +464,20 @@ int main(void)
 	configure_console();
 
 	printf("--- Console configured\r\n");
+	printf("--- READ_MODE: %u", READ_MODE);
 
 	/* Bring up the ethernet interface & initialize timer0, channel0. */
-	//init_ethernet();
+	init_ethernet();
+	
+	printf("--- Ethernet initialized\r\n");
 
 	/* Bring up the web server. */
-	//httpd_init();
+	httpd_init();
+	
+	printf("--- HTTP initialized\r\n");
 	
 	
-	
-	
-	bool countResetPinValue = true;
-	
-	// Set counter Y read pins
+	// ---- IO SETUP ----
 	for(uint8_t i = 0; i < 8 ; i++){
 		ioport_set_pin_dir(counterA.outputPins[i], IOPORT_DIR_INPUT);
 		ioport_set_pin_dir(counterB.outputPins[i], IOPORT_DIR_INPUT);
@@ -479,7 +489,6 @@ int main(void)
 	
 	printf("--- Counter data pins configured\r\n");
 	
-	/////This is for byte shift
 	for(uint8_t i = 0; i < 4 ; i++){
 		ioport_set_pin_dir(counterA.selectPins[i], IOPORT_DIR_OUTPUT);
 		ioport_set_pin_dir(counterB.selectPins[i], IOPORT_DIR_OUTPUT);
@@ -501,12 +510,13 @@ int main(void)
 	ioport_set_pin_dir(counterC.clearPin, IOPORT_DIR_OUTPUT);
 	ioport_set_pin_mode(counterC.clearPin, IOPORT_MODE_PULLDOWN);
 	
-	ioport_set_pin_level(counterA.clearPin, countResetPinValue);
-	ioport_set_pin_level(counterB.clearPin, countResetPinValue);
-	ioport_set_pin_level(counterC.clearPin, countResetPinValue);
+	ioport_set_pin_level(counterA.clearPin, HIGH);
+	ioport_set_pin_level(counterB.clearPin, HIGH);
+	ioport_set_pin_level(counterC.clearPin, HIGH);
 	
 	printf("--- Counter clear pins configured\r\n");
-	//Configure CountRead Pin and Interrupt
+	
+#if (READ_MODE)
 	ioport_set_pin_dir(SIGNAL1A_READY_PIN, IOPORT_DIR_INPUT);
 	ioport_set_pin_dir(SIGNAL2A_READY_PIN, IOPORT_DIR_INPUT);
 	ioport_set_pin_dir(SIGNAL1B_READY_PIN, IOPORT_DIR_INPUT);
@@ -528,7 +538,6 @@ int main(void)
 	
 	printf("--- Set signal ready pin sense\r\n");
 	
-	//pio_handler_set(PIOA, ID_PIOA, SIGNAL1A_READY_MASK, (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
 	pio_handler_set(PIOA, ID_PIOA, (SIGNAL1A_READY_MASK | SIGNAL2A_READY_MASK), (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
 	pio_handler_set(PIOC, ID_PIOC, (SIGNAL1B_READY_MASK | SIGNAL2B_READY_MASK), (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
 	
@@ -544,40 +553,86 @@ int main(void)
 	
 	printf("--- Set handler priority\r\n");
 	
-	//pio_enable_interrupt(PIOA, SIGNAL1A_READY_MASK);
 	pio_enable_interrupt(PIOA, (SIGNAL1A_READY_MASK | SIGNAL2A_READY_MASK));
 	pio_enable_interrupt(PIOC, (SIGNAL1B_READY_MASK | SIGNAL2B_READY_MASK));
 	
 	printf("--- Enabled interrupt\r\n");
+#else
+	ioport_set_pin_dir(SIGNAL1A_READY_PIN, IOPORT_DIR_INPUT);
+	
+	printf("--- Set signal ready pin direction\r\n");
+	
+	ioport_set_pin_mode(SIGNAL1A_READY_PIN, (IOPORT_MODE_PULLUP | IOPORT_MODE_DEBOUNCE) );
+	
+	printf("--- Set signal ready pin mode\r\n");
+	
+	ioport_set_pin_sense_mode(SIGNAL1A_READY_PIN, (IOPORT_SENSE_BOTHEDGES));
+	
+	printf("--- Set signal ready pin sense\r\n");
+	
+	pio_handler_set(PIOA, ID_PIOA, SIGNAL1A_READY_MASK , (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE | PIO_IT_FALL_EDGE), CountReady_Handler);
+	
+	printf("--- Set signal ready handler\r\n");
+	
+	NVIC_EnableIRQ((IRQn_Type) ID_PIOA);
+	
+	printf("--- Enabled IRQ\r\n");
+	
+	pio_handler_set_priority(PIOA, (IRQn_Type) ID_PIOA, IRQ_PRIOR_PIO);
+	
+	printf("--- Set handler priority\r\n");
+	
+	pio_enable_interrupt(PIOA, (SIGNAL1A_READY_MASK));
+	
+	printf("--- Enabled interrupt\r\n");
+#endif
+
+
+	// ---- Signal Flags ----
+	sig1A_flag = false;
+	sig2A_flag = false;
+	sig1B_flag = false;
+	sig2B_flag = false;
+	
+	#if (!READ_MODE)
+		last_flag = false;
+	#endif
 	
 	if (SysTick_Config(sysclk_get_cpu_hz() / 1000)) {
-		printf("-F- Systick configuration error\r\n\r\n");
+		printf("!F! Systick configuration error\r\n\r\n");
 		while (1);
 	}
 
 	printf("--- Starting Main Loop ---\r\n\r\n");
 	
-	while (true) {
-		
-		/*
-		printCountValue(counterA);
-		waitCount(10000);
-		printCountValue(counterB);
-		waitCount(10000);
-		printCountValue(counterC);
-		mdelay(1000);
-		*/
-		
-		/*
-		bool A1 = ioport_get_pin_level(SIGNAL1A_READY_PIN);
-		bool A2 = ioport_get_pin_level(SIGNAL2A_READY_PIN);
-		bool B1 = ioport_get_pin_level(SIGNAL1B_READY_PIN);
-		bool B2 = ioport_get_pin_level(SIGNAL2B_READY_PIN);
-		
-		printf("1A: %u\r\n2A: %u\r\n1B: %u\r\n2B: %u\r\n\r\n\r\n", A1, A2, B1, B2 );
-		mdelay(1000);
-		*/
-		
+	while (true){
+	#if (READ_MODE)
+		if(sig1A_flag && sig2A_flag){
+			sig1A_flag = false;
+			sig2A_flag = false;
+			sig1B_flag = false;
+			sig2B_flag = false;
+			printCountValue(counterA);
+		}
+		if(sig1B_flag && sig2B_flag){
+			sig1A_flag = false;
+			sig2A_flag = false;
+			sig2A_flag = false;
+			sig2B_flag = false;
+			printCountValue(counterB);
+		}
+	#else 
+		if(sig1A_flag != last_flag){
+			if(sig1A_flag){
+				printCountValue(counterA);
+			}
+			else{
+				printCountValue(counterB);
+			}
+		}
+		last_flag = sig1A_flag;
+	#endif
+		ethernet_task();
 	}
 
 	/* Program main loop.

@@ -206,8 +206,11 @@ void init_ethernet(void)
 	/* Initialize lwIP. */
 	lwip_init();
 
+	printf("----lwIP initialized\r\n");
+
 	/* Set hw and IP parameters, initialize MAC too. */
 	ethernet_configure_interface();
+	printf("----Ethernet interface configured\r\n");
 
 	/* Initialize timer. */
 	sys_init_timing();
