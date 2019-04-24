@@ -184,6 +184,12 @@
 /** ms */
 #define SAMPLE_PERIOD     1000
 
+// ECHO SERVER
+
+
+
+// ---/ECHO SERVER
+
 
 	
 	
@@ -472,8 +478,8 @@ int main(void)
 	printf("--- Ethernet initialized\r\n");
 
 	/* Bring up the web server. */
-	httpd_init();
-	
+	//httpd_init();
+	echo_init();
 	printf("--- HTTP initialized\r\n");
 	
 	

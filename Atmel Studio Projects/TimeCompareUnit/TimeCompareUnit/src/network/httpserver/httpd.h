@@ -35,5 +35,6 @@
 #define __HTTPD_H__
 
 void httpd_init(void);
+void echo_init(void);
 
 #endif /* __HTTPD_H__ */
