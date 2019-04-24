@@ -368,6 +368,7 @@ err_t echo_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
 	if(es !=NULL)
 	{
 		es->state = ES_ACCEPTED;
+		printf(">>ES_ACCEPTED\r\n");
 		es->pcb = newpcb;
 		es->retries = 0;
 		es->p = NULL;
@@ -396,6 +397,7 @@ err_t echo_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
 	{
 		/* remote host closed connection */
 		es->state = ES_CLOSING;
+		printf(">>ES_CLOSING\r\n");
 		if(es->p==NULL)
 		{
 			/*we're done sending, close it*/
@@ -423,6 +425,7 @@ err_t echo_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
 	{
 		/* first data chunk in p->payload */
 		es->state = ES_RECEIVED;
+		printf(">>ES_RECEIVED\r\n");
 		/* store reference to incoming pbuf (chain) */
 		es->p = p;
 		/* install send completion notifier */
@@ -582,6 +585,7 @@ void echo_send(struct tcp_pcb *tpcb, struct echo_state *es)
 		else
 		{
 			/* other problem ? */
+			printf("!!! ECHO SEND ERROR !!!\r\n");
 		}
 	}
 }
