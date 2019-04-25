@@ -97,7 +97,7 @@
 		
 // Read mode of 1 is the signal pair mode
 // Read mode of 0 is the single FF mode using SIGNAL1A_PIN
-#define READ_MODE 1
+#define READ_MODE 0
 #define OSCILLATOR_PERIOD 1000 //ns
 
 // DATA
@@ -274,6 +274,7 @@ bool sig1A_flag;
 bool sig2A_flag;
 bool sig1B_flag;
 bool sig2B_flag;
+bool last_flag;
 
 /** Global g_ul_ms_ticks in milliseconds since start of application */
 // [main_var_ticks]
@@ -410,11 +411,13 @@ static void CountReady_Handler(uint32_t id, uint32_t mask)
 		}
 	}
 #else
+
 	if(ID_PIOA == id){
 		if(SIGNAL1A_READY_MASK == mask){
 			sig1A_flag = !sig1A_flag;
 		}
 	}
+
 #endif
 }
 
@@ -472,7 +475,7 @@ int main(void)
 	printf("--- Console configured\r\n");
 	printf("--- READ_MODE: %u", READ_MODE);
 
-	/* Bring up the ethernet interface & initialize timer0, channel0. */
+	/* Bring up the Ethernet interface & initialize timer0, channel0. */
 	init_ethernet();
 	
 	printf("--- Ethernet initialized\r\n");
@@ -628,12 +631,15 @@ int main(void)
 			printCountValue(counterB);
 		}
 	#else 
+		//sig1A_flag = ioport_get_pin_level(SIGNAL1A_READY_PIN);
 		if(sig1A_flag != last_flag){
 			if(sig1A_flag){
-				printCountValue(counterA);
+				//printCountValue(counterA);
+				printCountValue(counterB);
 			}
 			else{
-				printCountValue(counterB);
+				//printCountValue(counterB);
+				printCountValue(counterA);
 			}
 		}
 		last_flag = sig1A_flag;
