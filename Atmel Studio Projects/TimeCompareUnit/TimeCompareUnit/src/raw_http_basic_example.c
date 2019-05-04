@@ -97,8 +97,9 @@
 		
 // Read mode of 1 is the signal pair mode
 // Read mode of 0 is the single FF mode using SIGNAL1A_PIN
-#define READ_MODE 0
-#define OSCILLATOR_PERIOD 1000 //ns
+#define READ_MODE 1
+#define OSCILLATOR_PERIOD 20 //ns
+#define OSCILLATOR_FREQUENCY 5000000 //10Hz
 
 // DATA
 // --COUNTERA
@@ -275,6 +276,10 @@ bool sig2A_flag;
 bool sig1B_flag;
 bool sig2B_flag;
 bool last_flag;
+bool calibration_flag;
+
+uint32_t calibrationCount;
+double calibrationFactor;
 
 /** Global g_ul_ms_ticks in milliseconds since start of application */
 // [main_var_ticks]
@@ -360,25 +365,64 @@ static void printCountValue(struct counter cntr){
 	{
 		readByte = readCounterByte(cntr.outputPins, cntr.selectPins, byteIndex, p_bitString);
 		readCount += ((uint32_t) readByte) << (8*byteIndex);
-		printf("[%c%d]%s : %u\r\n", cntr.label, byteIndex, bitString, readByte);
+		//printf("[%c%d]%s : %u\r\n", cntr.label, byteIndex, bitString, readByte);
 		waitCount(10000);
 	}
 	
 	// Reset HW counter and signal ready FFs
 	counterio_pulse_pin(cntr.clearPin, LOW, 10000);
 	
-	printf("Count: %u\r\n", readCount);
-	printf("delta-t: %uns\r\n", readCount * OSCILLATOR_PERIOD);
+	printf("[%c] Count: %u\r\n", cntr.label, readCount);
+	printf("delta-t: %uns\r\n", readCount * OSCILLATOR_PERIOD * calibrationFactor);
 	printf("\r\n");
 }
+
+static void printCalibrationValue(struct counter cntr){
+	uint8_t readByte = 0;
+	uint32_t readCount = 0;
+	char * p_bitString;
+	char bitString[9] = "";
+	p_bitString = &bitString;
+	
+	// Register counter outputs
+	counterio_pulse_pin(cntr.registerClkPin, HIGH, 10000);
+	waitCount(10000);
+	
+	for(uint8_t byteIndex = 0; byteIndex<4; byteIndex++)
+	{
+		readByte = readCounterByte(cntr.outputPins, cntr.selectPins, byteIndex, p_bitString);
+		readCount += ((uint32_t) readByte) << (8*byteIndex);
+		//printf("[%c%d]%s : %u\r\n", cntr.label, byteIndex, bitString, readByte);
+		waitCount(10000);
+	}
+	
+	// Reset HW counter and signal ready FFs
+	counterio_pulse_pin(cntr.clearPin, LOW, 10000);
+	
+	if(readCount != 0){
+		calibrationCount = readCount;
+		calibrationFactor = 100000000/calibrationCount;
+	}
+	
+	printf("Calibration Count: %u\r\n", calibrationCount);
+	printf("Calibration Factor: %f\r\n", calibrationFactor);
+	printf("\r\n");
+}
+
 
 static void CountReady_Handler(uint32_t id, uint32_t mask)
 {
 #if READ_MODE
 	if(ID_PIOA == id){
+		if(SIGNAL1A_READY_MASK == mask){
+			if(ioport_get_pin_level(SIGNAL1A_READY_PIN)){
+				calibration_flag = true;
+			}
+		}
 		if(SIGNAL1A_READY_MASK | SIGNAL2A_READY_MASK == mask){
 			if(ioport_get_pin_level(SIGNAL1A_READY_PIN)){
 				sig1A_flag = true;
+				calibration_flag = true;
 			}
 			else{
 				sig1A_flag = false;
@@ -602,6 +646,10 @@ int main(void)
 	sig2A_flag = false;
 	sig1B_flag = false;
 	sig2B_flag = false;
+	calibration_flag = false;
+	
+	calibrationCount = 0;
+	calibrationFactor = 0.0;
 	
 	#if (!READ_MODE)
 		last_flag = false;
@@ -629,6 +677,10 @@ int main(void)
 			sig2A_flag = false;
 			sig2B_flag = false;
 			printCountValue(counterB);
+		}
+		if(calibration_flag){
+			calibration_flag = false;
+			printCalibrationValue(counterC);
 		}
 	#else 
 		//sig1A_flag = ioport_get_pin_level(SIGNAL1A_READY_PIN);
