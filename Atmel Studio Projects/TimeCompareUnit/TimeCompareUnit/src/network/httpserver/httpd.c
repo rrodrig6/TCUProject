@@ -39,6 +39,15 @@
 #include "httpd.h"
 #include "fs.h"
 
+uint8_t sendBufferIndex;
+uint8_t sendBufferLength;
+char sendBuffer[64];
+
+uint8_t receiveBufferIndex;
+uint8_t receiveBufferLength;
+char receiveBuffer[32];
+
+
 struct http_state {
   char *file;
   u32_t left;
@@ -392,7 +401,7 @@ err_t echo_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
 	err_t ret_err;
 	
 	LWIP_ASSERT("arg != NULL", arg != NULL);
-	es = (struct echo_sstate *)arg;
+	es = (struct echo_state *)arg;
 	if (p == NULL)
 	{
 		/* remote host closed connection */
@@ -428,6 +437,11 @@ err_t echo_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
 		printf(">>ES_RECEIVED\r\n");
 		/* store reference to incoming pbuf (chain) */
 		es->p = p;
+		
+		// Save the read payload
+		pbuf_copy_partial(p, receiveBuffer + receiveBufferIndex, p->tot_len, 0);
+		receiveBufferIndex += p->tot_len;
+		
 		/* install send completion notifier */
 		tcp_sent(tpcb, echo_sent);
 		echo_send(tpcb, es);
@@ -439,11 +453,20 @@ err_t echo_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
 		if(es->p == NULL)
 		{
 			es->p = p;
+			
+			// Save the read payload
+			pbuf_copy_partial(p, receiveBuffer + receiveBufferIndex, p->tot_len, 0);
+			receiveBufferIndex += p->tot_len;
+			
 			tcp_sent(tpcb, echo_sent);
 			echo_send(tpcb, es);
 		}
 		else
 		{
+			// Save the read payload
+			pbuf_copy_partial(p, receiveBuffer + receiveBufferIndex, p->tot_len, 0);
+			receiveBufferIndex += p->tot_len;
+			
 			struct pbuf *ptr;
 			
 			/* chain pbufs to the end of what we received previously */

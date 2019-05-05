@@ -99,7 +99,6 @@
 // Read mode of 0 is the single FF mode using SIGNAL1A_PIN
 #define READ_MODE 1
 #define OSCILLATOR_PERIOD 20 //ns
-#define OSCILLATOR_FREQUENCY 5000000 //10Hz
 
 // DATA
 // --COUNTERA
@@ -280,6 +279,22 @@ bool calibration_flag;
 
 uint32_t calibrationCount;
 double calibrationFactor;
+uint8_t lastDeltaLen;
+uint32_t lastDeltaT;
+
+// TCP/IP Data
+uint8_t sendBufferIndex;
+uint8_t sendBufferLength;
+char sendBuffer[64];
+
+uint8_t receiveBufferIndex;
+uint8_t receiveBufferLength;
+char receiveBuffer[32];
+
+// Options
+bool counterAvisible;
+bool counterBvisilbe;
+bool counterCvisible;
 
 /** Global g_ul_ms_ticks in milliseconds since start of application */
 // [main_var_ticks]
@@ -350,9 +365,21 @@ uint8_t readCounterByte(uint8_t outputPins[], uint8_t selectPins[], uint8_t byte
 	return readByte;
 }
 
+static void printCountToOctets(uint32_t count){
+	uint8_t bit = 0;
+	for( int i=31; i>=0; i--){
+		bit = (count >> i) & 1;
+		printf("%u", bit);
+		if(i%8==0 && i!=0){
+			printf(" ");
+		}
+	}
+}
+
 static void printCountValue(struct counter cntr){
 	uint8_t readByte = 0;
 	uint32_t readCount = 0;
+	uint32_t adjustedDeltaT = 0;
 	char * p_bitString;
 	char bitString[9] = "";
 	p_bitString = &bitString;
@@ -369,11 +396,19 @@ static void printCountValue(struct counter cntr){
 		waitCount(10000);
 	}
 	
+	printf("[%c] Binary: ", cntr.label);
+	printCountToOctets(readCount);
+	printf("\r\n");
+	
 	// Reset HW counter and signal ready FFs
 	counterio_pulse_pin(cntr.clearPin, LOW, 10000);
 	
 	printf("[%c] Count: %u\r\n", cntr.label, readCount);
-	printf("delta-t: %uns\r\n", readCount * OSCILLATOR_PERIOD * calibrationFactor);
+
+	adjustedDeltaT = (double) readCount * calibrationFactor * OSCILLATOR_PERIOD;
+	lastDeltaT = adjustedDeltaT;
+	
+	printf("[%c] delta-t: %uns\r\n", cntr.label, adjustedDeltaT);
 	printf("\r\n");
 }
 
@@ -401,7 +436,7 @@ static void printCalibrationValue(struct counter cntr){
 	
 	if(readCount != 0){
 		calibrationCount = readCount;
-		calibrationFactor = 100000000/calibrationCount;
+		calibrationFactor = 50000000/ (double)calibrationCount;
 	}
 	
 	printf("Calibration Count: %u\r\n", calibrationCount);
@@ -509,6 +544,13 @@ static void configure_console(void)
  */
 int main(void)
 {
+	/* Global variable init */
+	receiveBufferIndex = 0;
+	lastCharReceived = '0';
+	lastDeltaLen = 0;
+	lastDeltaT = 0;
+	strcpy(sendString, "");
+	
 	/* Initialize the SAM system. */
 	sysclk_init();
 	board_init();
@@ -696,6 +738,13 @@ int main(void)
 		}
 		last_flag = sig1A_flag;
 	#endif
+		if(receiveBufferIndex>0){
+			receiveBuffer[receiveBufferIndex] = '\0';
+			printf("Receive Buffer: %s", receiveBuffer);
+			printf("\r\n\r\n");
+			memset(receiveBuffer, '\0', sizeof(receiveBuffer));
+			receiveBufferIndex = 0;
+		}
 		ethernet_task();
 	}
 
