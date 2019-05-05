@@ -572,13 +572,14 @@ void echo_send(struct tcp_pcb *tpcb, struct echo_state *es)
 	err_t wr_err = ERR_OK;
 	
 	while ((wr_err==ERR_OK)&&
-			(es->p !=NULL) &&
-			(es->p->len <= tcp_sndbuf(tpcb)))
+			(sendBufferIndex!=0) &&
+			(sendBufferIndex <= tcp_sndbuf(tpcb)))
 	{
 		ptr = es->p;
 		
 		/* enqueue data for transmission */
-		wr_err = tcp_write(tpcb, ptr->payload, ptr->len, 1);
+		wr_err = tcp_write(tpcb, sendBuffer, sendBufferIndex, 1);
+		sendBufferIndex = 0;
 		if(wr_err ==ERR_OK)
 		{
 			u16_t plen;

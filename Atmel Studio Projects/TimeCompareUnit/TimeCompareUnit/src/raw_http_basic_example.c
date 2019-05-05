@@ -292,9 +292,21 @@ uint8_t receiveBufferLength;
 char receiveBuffer[32];
 
 // Options
-bool counterAvisible;
-bool counterBvisilbe;
-bool counterCvisible;
+bool option_A_binary;
+bool option_B_binary;
+bool option_C_binary;
+
+bool option_A_integer;
+bool option_B_integer;
+bool option_C_integer;
+
+bool option_A_time;
+bool option_B_time;
+bool option_C_time;
+
+bool option_A_label;
+bool option_B_label;
+bool option_C_label;
 
 /** Global g_ul_ms_ticks in milliseconds since start of application */
 // [main_var_ticks]
@@ -545,11 +557,8 @@ static void configure_console(void)
 int main(void)
 {
 	/* Global variable init */
+	sendBufferIndex = 0;
 	receiveBufferIndex = 0;
-	lastCharReceived = '0';
-	lastDeltaLen = 0;
-	lastDeltaT = 0;
-	strcpy(sendString, "");
 	
 	/* Initialize the SAM system. */
 	sysclk_init();
@@ -739,9 +748,22 @@ int main(void)
 		last_flag = sig1A_flag;
 	#endif
 		if(receiveBufferIndex>0){
+			// Display Receive Buffer
 			receiveBuffer[receiveBufferIndex] = '\0';
 			printf("Receive Buffer: %s", receiveBuffer);
 			printf("\r\n\r\n");
+			
+			
+			// Process Input
+			char * cmdString = strstr(receiveBuffer, "gimme");
+			if(cmdString)
+			{
+				printf("---Command acknowledged---\r\n");
+				strcpy(sendBuffer, "HELLO");
+				sendBufferIndex = 6;
+			}
+			
+			// Clean up receive buffer
 			memset(receiveBuffer, '\0', sizeof(receiveBuffer));
 			receiveBufferIndex = 0;
 		}
