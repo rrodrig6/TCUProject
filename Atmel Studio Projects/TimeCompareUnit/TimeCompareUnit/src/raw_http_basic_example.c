@@ -100,6 +100,8 @@
 #define READ_MODE 1
 #define OSCILLATOR_PERIOD 20 //ns
 
+#define PULSE_LENGTH 1000
+
 // DATA
 // --COUNTERA
 #define COUNTERA0_PIN PIO_PD30_IDX
@@ -182,7 +184,7 @@
 // [main_def_pio_irq_prior]
 
 /** ms */
-#define SAMPLE_PERIOD     1000
+#define SAMPLE_PERIOD     100
 
 // ECHO SERVER
 
@@ -270,8 +272,10 @@ struct counter counterC = {
 							
 // ---- Global Vars ----
 
+bool a_flag;
 bool sig1A_flag;
 bool sig2A_flag;
+bool b_flag;
 bool sig1B_flag;
 bool sig2B_flag;
 bool last_flag;
@@ -353,7 +357,7 @@ uint8_t readCounterByte(uint8_t outputPins[], uint8_t selectPins[], uint8_t byte
 		}
 	}
 	
-	waitCount(10000);
+	waitCount(PULSE_LENGTH);
 	
 	// Get all 8 bits
 	for (uint8_t i=0; i<8; i++)
@@ -389,8 +393,11 @@ static void printCountToOctets(uint32_t count){
 }
 
 static void printCountValue(struct counter cntr){
+	a_flag = 0;
+	b_flag = 0;
 	uint8_t readByte = 0;
 	uint32_t readCount = 0;
+	uint32_t rawDeltaT = 0;
 	uint32_t adjustedDeltaT = 0;
 	char * p_bitString;
 	char bitString[9] = "";
@@ -398,29 +405,37 @@ static void printCountValue(struct counter cntr){
 	
 	// Register counter outputs
 	counterio_pulse_pin(cntr.registerClkPin, HIGH, 10000);
-	waitCount(10000);
+	waitCount(PULSE_LENGTH);
 	
 	for(uint8_t byteIndex = 0; byteIndex<4; byteIndex++)
 	{
 		readByte = readCounterByte(cntr.outputPins, cntr.selectPins, byteIndex, p_bitString);
 		readCount += ((uint32_t) readByte) << (8*byteIndex);
 		//printf("[%c%d]%s : %u\r\n", cntr.label, byteIndex, bitString, readByte);
-		waitCount(10000);
+		waitCount(PULSE_LENGTH);
 	}
-	
-	printf("[%c] Binary: ", cntr.label);
-	printCountToOctets(readCount);
-	printf("\r\n");
 	
 	// Reset HW counter and signal ready FFs
 	counterio_pulse_pin(cntr.clearPin, LOW, 10000);
 	
+	if(readCount > calibrationCount){
+		printf("!InvalidCount\r\n");
+		readCount -= calibrationCount;
+	}
+	
+	/*
+	printf("[%c] Binary: ", cntr.label);
+	printCountToOctets(readCount);
+	printf("\r\n");
+	*/
+
 	printf("[%c] Count: %u\r\n", cntr.label, readCount);
 
+	rawDeltaT = (double) readCount * OSCILLATOR_PERIOD;
 	adjustedDeltaT = (double) readCount * calibrationFactor * OSCILLATOR_PERIOD;
 	lastDeltaT = adjustedDeltaT;
-	
-	printf("[%c] delta-t: %uns\r\n", cntr.label, adjustedDeltaT);
+	printf("[%c] raw delta-t: %uns\r\n", cntr.label, rawDeltaT);
+	//printf("[%c] delta-t: %uns\r\n", cntr.label, adjustedDeltaT);
 	printf("\r\n");
 }
 
@@ -433,14 +448,14 @@ static void printCalibrationValue(struct counter cntr){
 	
 	// Register counter outputs
 	counterio_pulse_pin(cntr.registerClkPin, HIGH, 10000);
-	waitCount(10000);
+	waitCount(PULSE_LENGTH);
 	
 	for(uint8_t byteIndex = 0; byteIndex<4; byteIndex++)
 	{
 		readByte = readCounterByte(cntr.outputPins, cntr.selectPins, byteIndex, p_bitString);
 		readCount += ((uint32_t) readByte) << (8*byteIndex);
 		//printf("[%c%d]%s : %u\r\n", cntr.label, byteIndex, bitString, readByte);
-		waitCount(10000);
+		waitCount(PULSE_LENGTH);
 	}
 	
 	// Reset HW counter and signal ready FFs
@@ -451,9 +466,9 @@ static void printCalibrationValue(struct counter cntr){
 		calibrationFactor = 50000000/ (double)calibrationCount;
 	}
 	
-	printf("Calibration Count: %u\r\n", calibrationCount);
-	printf("Calibration Factor: %f\r\n", calibrationFactor);
-	printf("\r\n");
+	//printf("[C] Count: %u\r\n", calibrationCount);
+	//printf("[C] Factor: %f\r\n", calibrationFactor);
+	//printf("\r\n");
 }
 
 
@@ -461,44 +476,20 @@ static void CountReady_Handler(uint32_t id, uint32_t mask)
 {
 #if READ_MODE
 	if(ID_PIOA == id){
-		if(SIGNAL1A_READY_MASK == mask){
-			if(ioport_get_pin_level(SIGNAL1A_READY_PIN)){
-				calibration_flag = true;
-			}
+		if(SIGNAL1A_READY_MASK == (mask & SIGNAL1A_READY_MASK)){
+			calibration_flag = true;
 		}
-		if(SIGNAL1A_READY_MASK | SIGNAL2A_READY_MASK == mask){
-			if(ioport_get_pin_level(SIGNAL1A_READY_PIN)){
-				sig1A_flag = true;
-				calibration_flag = true;
-			}
-			else{
-				sig1A_flag = false;
-			}
-			if(ioport_get_pin_level(SIGNAL2A_READY_PIN)){
-				sig2A_flag = true;
-			}
-			else{
-				sig2A_flag = false;
-				
-			}
+		if(SIGNAL2A_READY_MASK == (mask & SIGNAL2A_READY_MASK)){
+			a_flag = true;
 		}
-		
 	}
 
 	if(ID_PIOC ==id){
-		if(SIGNAL1B_READY_MASK |SIGNAL2B_READY_MASK == mask){
-			if(ioport_get_pin_level(SIGNAL1B_READY_PIN)){
-				sig1B_flag = true;
-			}
-			else{
-				sig1B_flag = false;
-			}
-			if(ioport_get_pin_level(SIGNAL2B_READY_PIN)){
-				sig2B_flag = true;
-			}
-			else{
-				sig2B_flag = false;
-			}
+		if(SIGNAL1B_READY_MASK == (mask & SIGNAL1B_READY_MASK)){
+
+		}
+		if(SIGNAL2B_READY_MASK == (mask & SIGNAL2B_READY_MASK)){
+			b_flag = true;
 		}
 	}
 #else
@@ -642,8 +633,12 @@ int main(void)
 	
 	printf("--- Set signal ready pin sense\r\n");
 	
-	pio_handler_set(PIOA, ID_PIOA, (SIGNAL1A_READY_MASK | SIGNAL2A_READY_MASK), (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
-	pio_handler_set(PIOC, ID_PIOC, (SIGNAL1B_READY_MASK | SIGNAL2B_READY_MASK), (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
+	//pio_handler_set(PIOA, ID_PIOA, (SIGNAL1A_READY_MASK | SIGNAL2A_READY_MASK), (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
+	pio_handler_set(PIOA, ID_PIOA, SIGNAL1A_READY_MASK, (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
+	pio_handler_set(PIOA, ID_PIOA, SIGNAL2A_READY_MASK, (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
+	//pio_handler_set(PIOC, ID_PIOC, (SIGNAL1B_READY_MASK | SIGNAL2B_READY_MASK), (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
+	pio_handler_set(PIOC, ID_PIOC, SIGNAL1B_READY_MASK, (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
+	pio_handler_set(PIOC, ID_PIOC, SIGNAL2B_READY_MASK, (PIO_PULLUP | PIO_DEBOUNCE | PIO_IT_RISE_EDGE), CountReady_Handler);
 	
 	printf("--- Set signal ready handler\r\n");
 	
@@ -715,18 +710,14 @@ int main(void)
 	
 	while (true){
 	#if (READ_MODE)
-		if(sig1A_flag && sig2A_flag){
-			sig1A_flag = false;
-			sig2A_flag = false;
-			sig1B_flag = false;
-			sig2B_flag = false;
+		if(a_flag){
+			a_flag = false;
+			b_flag = false;
 			printCountValue(counterA);
 		}
-		if(sig1B_flag && sig2B_flag){
-			sig1A_flag = false;
-			sig2A_flag = false;
-			sig2A_flag = false;
-			sig2B_flag = false;
+		if(b_flag){
+			a_flag = false;
+			b_flag = false;
 			printCountValue(counterB);
 		}
 		if(calibration_flag){
@@ -759,8 +750,8 @@ int main(void)
 			if(cmdString)
 			{
 				printf("---Command acknowledged---\r\n");
-				strcpy(sendBuffer, "HELLO");
-				sendBufferIndex = 6;
+				strcpy(sendBuffer, "word0001horse002cheetah3kitten04human005chicken6llama007desk0008");
+				sendBufferIndex = 64;
 			}
 			
 			// Clean up receive buffer
@@ -769,11 +760,4 @@ int main(void)
 		}
 		ethernet_task();
 	}
-
-	/* Program main loop.
-	while (1) {
-		// Check for input packet and process it.
-		ethernet_task();
-	}
-	*/
 }

@@ -436,15 +436,15 @@ err_t echo_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
 		es->state = ES_RECEIVED;
 		printf(">>ES_RECEIVED\r\n");
 		/* store reference to incoming pbuf (chain) */
-		es->p = p;
+		//es->p = p;
 		
 		// Save the read payload
 		pbuf_copy_partial(p, receiveBuffer + receiveBufferIndex, p->tot_len, 0);
 		receiveBufferIndex += p->tot_len;
-		
+		pbuf_free(p);
 		/* install send completion notifier */
-		tcp_sent(tpcb, echo_sent);
-		echo_send(tpcb, es);
+		//tcp_sent(tpcb, echo_sent);
+		//echo_send(tpcb, es);
 		ret_err = ERR_OK;
 	}
 	else if(es->state == ES_RECEIVED)
@@ -452,26 +452,26 @@ err_t echo_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
 		/*read some more data */
 		if(es->p == NULL)
 		{
-			es->p = p;
+			//es->p = p;
 			
 			// Save the read payload
 			pbuf_copy_partial(p, receiveBuffer + receiveBufferIndex, p->tot_len, 0);
 			receiveBufferIndex += p->tot_len;
-			
-			tcp_sent(tpcb, echo_sent);
-			echo_send(tpcb, es);
+			pbuf_free(p);
+			//tcp_sent(tpcb, echo_sent);
+			//echo_send(tpcb, es);
 		}
 		else
 		{
 			// Save the read payload
 			pbuf_copy_partial(p, receiveBuffer + receiveBufferIndex, p->tot_len, 0);
 			receiveBufferIndex += p->tot_len;
-			
-			struct pbuf *ptr;
+			pbuf_free(p);
+			//struct pbuf *ptr;
 			
 			/* chain pbufs to the end of what we received previously */
-			ptr = es->p;
-			pbuf_chain(ptr, p);
+			//ptr = es->p;
+			//pbuf_chain(ptr, p);
 		}
 		ret_err = ERR_OK;
 	}
@@ -512,18 +512,24 @@ err_t echo_poll(void *arg, struct tcp_pcb *tpcb)
 	err_t ret_err;
 	struct echo_state *es;
 	
+	if(sendBufferIndex>0)
+	{
+		echo_send(tpcb, es);
+	}
+	
+	/*
 	es = (struct echo_state *)arg;
 	if(es!=NULL)
 	{
 		if(es->p!=NULL)
 		{
-			/* there is a remaining pbuf (chain) */
+			// there is a remaining pbuf (chain)
 			tcp_sent(tpcb, echo_sent);
 			echo_send(tpcb, es);
 		}
 		else
 		{
-			/* no remaining pbuf (chain) */
+			// no remaining pbuf (chain)
 			if(es->state == ES_CLOSING)
 			{
 				echo_close(tpcb, es);
@@ -533,10 +539,11 @@ err_t echo_poll(void *arg, struct tcp_pcb *tpcb)
 	}
 	else
 	{
-		/* nothing to be done */
+		// nothing to be done
 		tcp_abort(tpcb);
 		ret_err = ERR_ABRT;
 	}
+	*/
 	return ret_err;
 }
 
@@ -568,6 +575,7 @@ err_t echo_sent(void *arg, struct tcp_pcb *tpcb, u16_t len)
 
 void echo_send(struct tcp_pcb *tpcb, struct echo_state *es)
 {
+	printf(">>>ECHO SEND");
 	struct pbuf *ptr;
 	err_t wr_err = ERR_OK;
 	
@@ -575,40 +583,42 @@ void echo_send(struct tcp_pcb *tpcb, struct echo_state *es)
 			(sendBufferIndex!=0) &&
 			(sendBufferIndex <= tcp_sndbuf(tpcb)))
 	{
-		ptr = es->p;
+		//ptr = es->p;
 		
-		/* enqueue data for transmission */
+		// enqueue data for transmission 
 		wr_err = tcp_write(tpcb, sendBuffer, sendBufferIndex, 1);
 		sendBufferIndex = 0;
 		if(wr_err ==ERR_OK)
 		{
+			/*
 			u16_t plen;
 			u8_t freed;
 			plen = ptr->len;
-			/* continue with next pbuf in chain (if any) */
+			// continue with next pbuf in chain (if any) 
 			es->p = ptr->next;
 			if(es->p !=NULL)
 			{
-				/* new reference! */
+				// new reference! 
 				pbuf_ref(es->p);
 			}
-			/* chop first pbuf from chain */
+			// chop first pbuf from chain
 			do{
-				/*try hard to free pbuf */
+				//try hard to free pbuf
 				freed = pbuf_free(ptr);
 			}
 			while(freed == 0);
-			/* we can read more data now */
+			// we can read more data now
 			tcp_recved(tpcb, plen);
+			*/
 		}
 		else if(wr_err==ERR_MEM)
 		{
-			/* we are low on memory, try later/harder, defer to poll */
+			// we are low on memory, try later/harder, defer to poll */
 			es->p = ptr;
 		}
 		else
 		{
-			/* other problem ? */
+			// other problem ? //
 			printf("!!! ECHO SEND ERROR !!!\r\n");
 		}
 	}
