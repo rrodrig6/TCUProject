@@ -101,6 +101,10 @@
 #define OSCILLATOR_PERIOD 20 //ns
 
 #define PULSE_LENGTH 1000
+#define DELAY_BYTE_SELECT 1000
+
+#define SEND_BUFFER_MAX 128
+#define RECEIVE_BUFFER_MAX 64
 
 // DATA
 // --COUNTERA
@@ -158,14 +162,6 @@
 #define COUNTERB_CLR_PIN PIO_PD26_IDX
 #define COUNTERC_CLR_PIN PIO_PA2_IDX
 
-// COUNTER READY
-//#define COUNTERA_READY_PIN PIO_PA21_IDX
-//#define COUNTERA_READY_MASK PIO_PA21
-//#define COUNTERB_READY_PIN PIO_PB4_IDX
-//#define COUNTERB_READY_MASK PIO_PB4
-//#define COUNTERC_READY_PIN PIO_PB13_IDX
-//#define COUNTERC_READY_MASK PIO_PB13
-
 // SIGNAL READY
 // --Pair A
 #define SIGNAL1A_READY_PIN PIO_PA22_IDX
@@ -195,18 +191,25 @@
 
 	
 	
+
 // ---- Counters ----
 
 struct counter
 {
+	uint32_t value;
 	uint8_t selectPins[4];
 	uint8_t outputPins[8];
 	uint8_t registerClkPin;
 	uint8_t clearPin;
 	char label;
+	bool optionDisplayLabel;
+	bool optionDisplayDeltaT;
+	bool optionDisplayBinaryCount;
+	bool optionDisplayDecimalCount;
 };
 
 struct counter counterA = {
+							0,
 							{	COUNTERA_SEL0_PIN,
 								COUNTERA_SEL1_PIN,
 								COUNTERA_SEL2_PIN,
@@ -222,13 +225,16 @@ struct counter counterA = {
 								COUNTERA7_PIN		},
 								
 								COUNTERA_REG_CLK_PIN,
-								
 								COUNTERA_CLR_PIN,
-								
-								'A'
+								'A',
+								true,
+								true,
+								false,
+								true
 							};
 							
 struct counter counterB = {
+							0,
 							{	COUNTERB_SEL0_PIN,
 								COUNTERB_SEL1_PIN,
 								COUNTERB_SEL2_PIN,
@@ -243,13 +249,16 @@ struct counter counterB = {
 								COUNTERB7_PIN		},
 								
 								COUNTERB_REG_CLK_PIN,
-								
 								COUNTERB_CLR_PIN,
-								
-								'B'
+								'B',
+								true,
+								true,
+								false,
+								true
 							};
 							
 struct counter counterC = {
+							0,
 							{	COUNTERC_SEL0_PIN,
 								COUNTERC_SEL1_PIN,
 								COUNTERC_SEL2_PIN,
@@ -264,10 +273,12 @@ struct counter counterC = {
 								COUNTERC7_PIN		},
 								
 								COUNTERC_REG_CLK_PIN,
-								
 								COUNTERC_CLR_PIN,
-								
-								'C'
+								'C',
+								true,
+								false,
+								false,
+								false
 							};
 							
 // ---- Global Vars ----
@@ -289,28 +300,16 @@ uint32_t lastDeltaT;
 // TCP/IP Data
 uint8_t sendBufferIndex;
 uint8_t sendBufferLength;
-char sendBuffer[64];
+char sendBuffer[SEND_BUFFER_MAX];
 
 uint8_t receiveBufferIndex;
 uint8_t receiveBufferLength;
-char receiveBuffer[32];
+char receiveBuffer[RECEIVE_BUFFER_MAX];
+
+
 
 // Options
-bool option_A_binary;
-bool option_B_binary;
-bool option_C_binary;
-
-bool option_A_integer;
-bool option_B_integer;
-bool option_C_integer;
-
-bool option_A_time;
-bool option_B_time;
-bool option_C_time;
-
-bool option_A_label;
-bool option_B_label;
-bool option_C_label;
+bool optionSystemState;
 
 /** Global g_ul_ms_ticks in milliseconds since start of application */
 // [main_var_ticks]
@@ -339,12 +338,10 @@ static void counterio_pulse_pin(uint8_t pin, uint8_t direction, uint32_t wait)
 	ioport_set_pin_level(pin, !direction);
 }
 
-uint8_t readCounterByte(uint8_t outputPins[], uint8_t selectPins[], uint8_t byte, char ** p_binaryString)
+uint8_t readCounterByte(uint8_t outputPins[], uint8_t selectPins[], uint8_t byte)
 {
 	uint8_t volatile readByte = 0;
 	uint8_t volatile bit = 0;
-	char bitString[9];
-	char tempString[2];
 	
 	// Set byte pin low and the rest high
 	for (uint8_t i = 0; i<4; i++)
@@ -364,79 +361,97 @@ uint8_t readCounterByte(uint8_t outputPins[], uint8_t selectPins[], uint8_t byte
 	{
 		bit = ioport_get_pin_level(outputPins[i]);
 		readByte = readByte | (bit<<i);
-		sprintf(tempString, "%u", bit);
-		bitString[7-i]= tempString[0];
 	}
-	
-	bitString[8]='\0';
-	
+
 	ioport_set_pin_level(selectPins[0],HIGH);
 	ioport_set_pin_level(selectPins[1],HIGH);
 	ioport_set_pin_level(selectPins[2],HIGH);
 	ioport_set_pin_level(selectPins[3],HIGH);
 	
-	strncpy(p_binaryString, bitString, 9);
-	
-	
 	return readByte;
 }
 
-static void printCountToOctets(uint32_t count){
+
+// binaryString must be 33 characters long
+static void stringInt32ToBinary(char *binaryString, uint32_t value){
 	uint8_t bit = 0;
+	
 	for( int i=31; i>=0; i--){
-		bit = (count >> i) & 1;
-		printf("%u", bit);
-		if(i%8==0 && i!=0){
-			printf(" ");
-		}
+		bit = (value >> i) & 1;
+		sprintf(binaryString[31-i], "%u", bit);
 	}
 }
 
-static void printCountValue(struct counter cntr){
-	a_flag = 0;
-	b_flag = 0;
+static void getCountValue(struct counter * cntr){
 	uint8_t readByte = 0;
 	uint32_t readCount = 0;
-	uint32_t rawDeltaT = 0;
-	uint32_t adjustedDeltaT = 0;
-	char * p_bitString;
-	char bitString[9] = "";
-	p_bitString = &bitString;
 	
 	// Register counter outputs
-	counterio_pulse_pin(cntr.registerClkPin, HIGH, 10000);
+	counterio_pulse_pin(cntr->registerClkPin, HIGH, 10000);
 	waitCount(PULSE_LENGTH);
 	
+	// Get each byte
 	for(uint8_t byteIndex = 0; byteIndex<4; byteIndex++)
 	{
-		readByte = readCounterByte(cntr.outputPins, cntr.selectPins, byteIndex, p_bitString);
+		readByte = readCounterByte(cntr->outputPins, cntr->selectPins, byteIndex);
 		readCount += ((uint32_t) readByte) << (8*byteIndex);
-		//printf("[%c%d]%s : %u\r\n", cntr.label, byteIndex, bitString, readByte);
-		waitCount(PULSE_LENGTH);
+		waitCount(DELAY_BYTE_SELECT);
 	}
 	
 	// Reset HW counter and signal ready FFs
-	counterio_pulse_pin(cntr.clearPin, LOW, 10000);
+	counterio_pulse_pin(cntr->clearPin, LOW, 10000);
+	cntr->value = readCount;
+}
+
+static void printCountValue(struct counter cntr, bool tcpTx){
+	uint32_t rawDeltaT = 0;
+	uint32_t adjustedDeltaT = 0;
+	char labelString[5] = { '[', cntr.label, ']', ' ', '\0'};
+	char outputString[SEND_BUFFER_MAX+1] = "";
+	char binaryString[33] = "";
+	char decimalString[32] = "";
+	char doubleString[33] = "";
 	
-	if(readCount > calibrationCount){
-		printf("!InvalidCount\r\n");
-		readCount -= calibrationCount;
+	uint32_t countValue = cntr.value;
+	
+	if(countValue > 50000000){
+		countValue -=50000000;
 	}
 	
-	/*
-	printf("[%c] Binary: ", cntr.label);
-	printCountToOctets(readCount);
-	printf("\r\n");
-	*/
+	if(cntr.optionDisplayBinaryCount){
+		stringInt32ToBinary(binaryString, countValue);
+		
+		if(cntr.optionDisplayLabel){
+			strcat(outputString, labelString);
+		}
+		strcat(outputString, binaryString);
+		strcat(outputString, "\r\n");
+	}
 
-	printf("[%c] Count: %u\r\n", cntr.label, readCount);
-
-	rawDeltaT = (double) readCount * OSCILLATOR_PERIOD;
-	adjustedDeltaT = (double) readCount * calibrationFactor * OSCILLATOR_PERIOD;
-	lastDeltaT = adjustedDeltaT;
-	printf("[%c] raw delta-t: %uns\r\n", cntr.label, rawDeltaT);
-	//printf("[%c] delta-t: %uns\r\n", cntr.label, adjustedDeltaT);
-	printf("\r\n");
+	if(cntr.optionDisplayDecimalCount){
+		if(cntr.optionDisplayLabel){
+			strcat(outputString, labelString);
+		}
+		sprintf(decimalString, "%u\r\n", countValue);
+		strcat(outputString, decimalString);
+	}
+	
+	if(cntr.optionDisplayDeltaT){
+		rawDeltaT = (double) countValue * OSCILLATOR_PERIOD;
+		
+		if(cntr.optionDisplayLabel){
+			strcat(outputString, labelString);
+		}
+		sprintf(doubleString, "%uns\r\n", rawDeltaT);
+		strcat(outputString, doubleString);
+	}
+	strcat(outputString, "\r\n");
+	printf("%s", outputString);
+	if(tcpTx){
+		if(sendBufferIndex+strlen(outputString)<SEND_BUFFER_MAX)
+		strcpy(sendBuffer+sendBufferIndex, outputString);
+		sendBufferIndex += strlen(outputString);
+	}
 }
 
 static void printCalibrationValue(struct counter cntr){
@@ -452,7 +467,7 @@ static void printCalibrationValue(struct counter cntr){
 	
 	for(uint8_t byteIndex = 0; byteIndex<4; byteIndex++)
 	{
-		readByte = readCounterByte(cntr.outputPins, cntr.selectPins, byteIndex, p_bitString);
+		readByte = readCounterByte(cntr.outputPins, cntr.selectPins, byteIndex);
 		readCount += ((uint32_t) readByte) << (8*byteIndex);
 		//printf("[%c%d]%s : %u\r\n", cntr.label, byteIndex, bitString, readByte);
 		waitCount(PULSE_LENGTH);
@@ -547,9 +562,24 @@ static void configure_console(void)
  */
 int main(void)
 {
+	// Commands
+
+	uint8_t numCommands = 4;
+	uint8_t commandStringMaxLength = 8;
+	const char *commandInputString [numCommands];
+	commandInputString[0] = 'start';
+		'stop',
+		'labelson',
+		'labelsoff'
+	};
+	char *commandInputPtr;
+	char commandSendString[commandStringMaxLength+5];
+	
 	/* Global variable init */
 	sendBufferIndex = 0;
 	receiveBufferIndex = 0;
+	
+	optionSystemState = true;
 	
 	/* Initialize the SAM system. */
 	sysclk_init();
@@ -559,7 +589,7 @@ int main(void)
 	configure_console();
 
 	printf("--- Console configured\r\n");
-	printf("--- READ_MODE: %u", READ_MODE);
+	printf("--- READ_MODE: %u\r\n", READ_MODE);
 
 	/* Bring up the Ethernet interface & initialize timer0, channel0. */
 	init_ethernet();
@@ -709,35 +739,43 @@ int main(void)
 	printf("--- Starting Main Loop ---\r\n\r\n");
 	
 	while (true){
-	#if (READ_MODE)
-		if(a_flag){
-			a_flag = false;
-			b_flag = false;
-			printCountValue(counterA);
+		// Clean up send buffer
+		//memset(sendBuffer, '\0', sizeof(sendBuffer));
+		//sendBufferIndex = 0;
+		if(optionSystemState){
+			#if (READ_MODE)
+				if(a_flag){
+					a_flag = false;
+					//b_flag = false;
+					getCountValue(&counterA);
+					printCountValue(counterA, true);
+				}
+				if(b_flag){
+					//a_flag = false;
+					b_flag = false;
+					getCountValue(&counterB);
+					printCountValue(counterB, true);
+				}
+				if(calibration_flag){
+					calibration_flag = false;
+					getCountValue(&counterC);
+					printCalibrationValue(counterC);
+				}
+			#else 
+				//sig1A_flag = ioport_get_pin_level(SIGNAL1A_READY_PIN);
+				if(sig1A_flag != last_flag){
+					if(sig1A_flag){
+						//printCountValue(counterA);
+						printCountValue(counterB);
+					}
+					else{
+						//printCountValue(counterB);
+						printCountValue(counterA);
+					}
+				}
+				last_flag = sig1A_flag;
+			#endif
 		}
-		if(b_flag){
-			a_flag = false;
-			b_flag = false;
-			printCountValue(counterB);
-		}
-		if(calibration_flag){
-			calibration_flag = false;
-			printCalibrationValue(counterC);
-		}
-	#else 
-		//sig1A_flag = ioport_get_pin_level(SIGNAL1A_READY_PIN);
-		if(sig1A_flag != last_flag){
-			if(sig1A_flag){
-				//printCountValue(counterA);
-				printCountValue(counterB);
-			}
-			else{
-				//printCountValue(counterB);
-				printCountValue(counterA);
-			}
-		}
-		last_flag = sig1A_flag;
-	#endif
 		if(receiveBufferIndex>0){
 			// Display Receive Buffer
 			receiveBuffer[receiveBufferIndex] = '\0';
@@ -745,14 +783,52 @@ int main(void)
 			printf("\r\n\r\n");
 			
 			
-			// Process Input
-			char * cmdString = strstr(receiveBuffer, "gimme");
-			if(cmdString)
-			{
-				printf("---Command acknowledged---\r\n");
-				strcpy(sendBuffer, "word0001horse002cheetah3kitten04human005chicken6llama007desk0008");
-				sendBufferIndex = 64;
+			commandInputPtr = NULL;
+			for(int cmdIndex=0; cmdIndex < numCommands; cmdIndex ++){
+				commandInputPtr = strstr(receiveBuffer, commandInputString[i]);
+				if(commandInputPtr){
+					printf(">%s\r\n", commandInputString[i]);
+					sprintf(commandSendString, "<%s\r\n", commandInputString[i]);
+					strcpy(sendBuffer, commandSendString);
+					sendBufferIndex += strlen(commandSendString);
+					switch(commandInputString[i]){
+						case 'start':
+							optionSystemState = true;
+							break;
+						case 'stop':
+							optionSystemState = false;
+							break;
+						case 'labelson':
+							
+							break;
+						case 'labelsoff':
+						
+							break;
+					}
+				}
 			}
+						
+			// Process Input
+			/*
+			char * cmdPtr;
+			cmdPtr = strstr(receiveBuffer, "start");
+			if(cmdPtr)
+			{
+				printf(">START\r\n");
+				strcpy(sendBuffer, "<START\r\n");
+				sendBufferIndex = 8;
+				optionSystemState = true;
+			}
+			cmdPtr = NULL;
+			cmdPtr = strstr(receiveBuffer, "stop");
+			if(cmdPtr)
+			{
+				printf(">STOP\r\n");
+				strcpy(sendBuffer, "<STOP\r\n");
+				sendBufferIndex = 8;
+				optionSystemState = false;
+			}
+			*/
 			
 			// Clean up receive buffer
 			memset(receiveBuffer, '\0', sizeof(receiveBuffer));

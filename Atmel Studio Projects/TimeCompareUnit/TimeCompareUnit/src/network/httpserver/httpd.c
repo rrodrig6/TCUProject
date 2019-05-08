@@ -39,13 +39,16 @@
 #include "httpd.h"
 #include "fs.h"
 
+#define SEND_BUFFER_MAX 128
+#define RECEIVE_BUFFER_MAX 64
+
 uint8_t sendBufferIndex;
 uint8_t sendBufferLength;
-char sendBuffer[64];
+char sendBuffer[SEND_BUFFER_MAX];
 
 uint8_t receiveBufferIndex;
 uint8_t receiveBufferLength;
-char receiveBuffer[32];
+char receiveBuffer[RECEIVE_BUFFER_MAX];
 
 
 struct http_state {
@@ -575,7 +578,7 @@ err_t echo_sent(void *arg, struct tcp_pcb *tpcb, u16_t len)
 
 void echo_send(struct tcp_pcb *tpcb, struct echo_state *es)
 {
-	printf(">>>ECHO SEND");
+	printf(">>>ECHO SEND %u BYTES\r\n", sendBufferIndex);
 	struct pbuf *ptr;
 	err_t wr_err = ERR_OK;
 	
