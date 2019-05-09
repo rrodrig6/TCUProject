@@ -230,7 +230,7 @@ struct counter counterA = {
 								true,
 								true,
 								false,
-								true
+								false
 							};
 							
 struct counter counterB = {
@@ -254,7 +254,7 @@ struct counter counterB = {
 								true,
 								true,
 								false,
-								true
+								false
 							};
 							
 struct counter counterC = {
@@ -564,14 +564,15 @@ int main(void)
 {
 	// Commands
 
-	uint8_t numCommands = 4;
+	uint8_t numCommands = 6;
 	uint8_t commandStringMaxLength = 8;
 	const char *commandInputString [numCommands];
-	commandInputString[0] = 'start';
-		'stop',
-		'labelson',
-		'labelsoff'
-	};
+	commandInputString[0] = "start";
+	commandInputString[1] = "stop";
+	commandInputString[2] = "labelson";
+	commandInputString[3] = "labelsoff";
+	commandInputString[4] = "decimalon";
+	commandInputString[5] = "decimaloff";
 	char *commandInputPtr;
 	char commandSendString[commandStringMaxLength+5];
 	
@@ -678,7 +679,7 @@ int main(void)
 	printf("--- Enabled IRQ\r\n");
 	
 	pio_handler_set_priority(PIOA, (IRQn_Type) ID_PIOA, IRQ_PRIOR_PIO);
-	pio_handler_set_priority(PIOC, (IRQn_Type) ID_PIOB, IRQ_PRIOR_PIO);
+	pio_handler_set_priority(PIOC, (IRQn_Type) ID_PIOC, IRQ_PRIOR_PIO);
 	
 	printf("--- Set handler priority\r\n");
 	
@@ -781,29 +782,36 @@ int main(void)
 			receiveBuffer[receiveBufferIndex] = '\0';
 			printf("Receive Buffer: %s", receiveBuffer);
 			printf("\r\n\r\n");
-			
-			
-			commandInputPtr = NULL;
+		
 			for(int cmdIndex=0; cmdIndex < numCommands; cmdIndex ++){
-				commandInputPtr = strstr(receiveBuffer, commandInputString[i]);
+				commandInputPtr = NULL;
+				commandInputPtr = strstr(receiveBuffer, commandInputString[cmdIndex]);
 				if(commandInputPtr){
-					printf(">%s\r\n", commandInputString[i]);
-					sprintf(commandSendString, "<%s\r\n", commandInputString[i]);
+					printf(">%s\r\n", commandInputString[cmdIndex]);
+					sprintf(commandSendString, "<%s\r\n", commandInputString[cmdIndex]);
 					strcpy(sendBuffer, commandSendString);
 					sendBufferIndex += strlen(commandSendString);
-					switch(commandInputString[i]){
-						case 'start':
-							optionSystemState = true;
-							break;
-						case 'stop':
-							optionSystemState = false;
-							break;
-						case 'labelson':
-							
-							break;
-						case 'labelsoff':
-						
-							break;
+					if(strcmp(commandInputString[cmdIndex], "start")==0){
+						optionSystemState = true;
+					}
+					else if(strcmp(commandInputString[cmdIndex], "stop")==0){
+						optionSystemState = false;
+					}
+					else if(strcmp(commandInputString[cmdIndex], "labelson")==0){
+						counterA.optionDisplayLabel = true;
+						counterB.optionDisplayLabel = true;
+					}
+					else if(strcmp(commandInputString[cmdIndex], "labelsoff")==0){
+						counterA.optionDisplayLabel = false;
+						counterB.optionDisplayLabel = false;
+					}
+					else if(strcmp(commandInputString[cmdIndex], "decimalon")==0){
+						counterA.optionDisplayDecimalCount = true;
+						counterB.optionDisplayDecimalCount = true;
+					}
+					else if(strcmp(commandInputString[cmdIndex], "decimaloff")==0){
+						counterA.optionDisplayDecimalCount = false;
+						counterB.optionDisplayDecimalCount = false;
 					}
 				}
 			}
